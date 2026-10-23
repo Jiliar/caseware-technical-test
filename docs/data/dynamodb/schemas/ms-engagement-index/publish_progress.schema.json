@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/publish_progress.schema.json",
+  "title": "publish_progress item (PublishProgressUnit)",
+  "description": "Completeness of a publish per unit (publishId, sourceVersion, shard) (RF-084, RF-022). DISENO S3 (c).",
+  "$comment": "Table publish_progress (per cell). PK = PUB#<publishId>, SK = UNIT#<sourceVersion>#S<shard>. AP-I7: Query PK. TTL attribute ttl = TTL_job. Feeds PublishProjectionCompleted.v1 (EV-23). Unit state IN_PROGRESS -> COMPLETED (DISENO 3.8.2).",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"PUB#<publishId>\".",
+      "pattern": "^PUB#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"UNIT#<sourceVersion>#S<shard>\".",
+      "pattern": "^UNIT#.+#S[0-9]+$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "PublishProgressUnit",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "publishId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Publish id."
+    },
+    "sourceVersion": {
+      "type": "string",
+      "description": "Eligible source version label of the unit."
+    },
+    "expected": {
+      "type": "integer",
+      "description": "Expected items in the unit."
+    },
+    "processed": {
+      "type": "integer",
+      "description": "Processed items in the unit."
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter TTL_job (no value fixed in the docs)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "IN_PROGRESS",
+        "COMPLETED"
+      ],
+      "description": "IN_PROGRESS -> COMPLETED when the unit is materialised (unit worker of ms-engagement-index). Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "publishId",
+    "sourceVersion",
+    "expected",
+    "processed",
+    "ttl",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

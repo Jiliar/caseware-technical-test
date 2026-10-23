@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-experience-gateway/view_outbox.schema.json",
+  "title": "view_outbox item (SummaryViewOutbox)",
+  "description": "Outbox of summary views, written when the detail is served; its Stream publishes SummaryViewed.v1 (EV-28, ADR-019, RF-048).",
+  "$comment": "Table view_outbox (per cell). Partition key only: PK = VIEW#<eventId>. AP-G3: conditional PutItem by eventId. Streams -> relay of SummaryViewed.v1. TTL attribute ttl = TTL_outbox (DEC-28); the relay does not rewrite the item, so state stays PENDING.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"VIEW#<eventId>\".",
+      "pattern": "^VIEW#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "SummaryViewOutbox",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "eventId generated when serving the detail."
+    },
+    "summaryId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Summary shown."
+    },
+    "engagementId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Engagement."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm."
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Viewer."
+    },
+    "viewedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "View instant."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "DETERMINISTIC",
+        "NARRATIVE"
+      ],
+      "description": "SummaryKind (DISENO S2 (b))."
+    },
+    "renderedHash": {
+      "type": "string",
+      "description": "Hash of the rendered content (EV-28)."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Epoch seconds; DynamoDB TTL = createdAt + TTL_outbox (DEC-28)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PENDING"
+      ],
+      "description": "Constant PENDING: the Stream publishes the item; it expires with TTL_outbox. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "entityType",
+    "eventId",
+    "summaryId",
+    "engagementId",
+    "firmId",
+    "userId",
+    "viewedAt",
+    "kind",
+    "renderedHash",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state",
+    "ttl"
+  ],
+  "additionalProperties": false
+}

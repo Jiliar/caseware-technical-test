@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-experience-gateway/getPendingUpdateBreakdown.response.schema.json",
+  "title": "getPendingUpdateBreakdown response",
+  "description": "GET /v1/engagements/{engagementId}/pending-update/breakdown - responses per status code.",
+  "$comment": "Source: DISENO S7 (e), 3.8.6 BreakdownStep, DEC-34; PRD RF-050. Audience: PUBLIC. Residency: REGIONAL engagement lookup + global TEMPLATE_PUBLIC summaries. Idempotency: safe read (GET). Pagination: none (bounded by the intermediate versions).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        404,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Breakdown of the pending offer.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Breakdown of the pending offer."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Steps in order from the base to the offer target.",
+          "properties": {
+            "engagementId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Engagement id."
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "../_shared/BreakdownStep.schema.json"
+              },
+              "description": "One step per consecutive pair of [currentVersion, intermediateVersions..., offerTarget]."
+            }
+          },
+          "required": [
+            "engagementId",
+            "steps"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Engagement not found or without a pending offer (not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Engagement not found or without a pending offer (not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "steps": [
+          {
+            "fromVersion": "v3",
+            "toVersion": "v4",
+            "summaryStatus": "PENDING",
+            "record": null
+          },
+          {
+            "fromVersion": "v4",
+            "toVersion": "v5",
+            "summaryStatus": "PENDING",
+            "record": null
+          }
+        ]
+      }
+    }
+  ]
+}

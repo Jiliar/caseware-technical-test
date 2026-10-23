@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-engagement-index/getFirmCounters.response.schema.json",
+  "title": "getFirmCounters response",
+  "description": "GET /v1/firms/{firmId}/counters - responses per status code. Aggregated counters of a firm per product (pending, declined, verifying).",
+  "$comment": "Source: DISENO S3 (d) FirmCountersQuery, (e), (i) optional Redis cache, AP-I5; ADR-012; PRD RF-031. Audience: INTERNAL service-to-service - SX-01a family (S7 EngagementIndexClient). Residency: REGIONAL (cell of the firm); ENGAGEMENT_REGIONAL data never leaves the cell (RF-092, RF-093). Idempotency: safe read (GET). Pagination: none (bounded: one entry per template/product).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Counters.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Counters."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "../_shared/FirmCounters.schema.json"
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "totals": {
+          "pending": 1840,
+          "declined": 12,
+          "unclassified": 310
+        },
+        "byTemplate": [
+          {
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "pending": 1840,
+            "declined": 12,
+            "unclassified": 310
+          }
+        ],
+        "updatedAt": "2026-10-22T10:00:07Z"
+      }
+    }
+  ]
+}

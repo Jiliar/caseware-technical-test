@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-change-summary/reportSummary.response.schema.json",
+  "title": "reportSummary response",
+  "description": "POST /v1/summaries/{summaryId}/reports - responses per status code. Reports a summary as incorrect or unclear; creates a review case feeding the golden set.",
+  "$comment": "Source: DISENO S2 (e) 'POST /v1/summaries/{summaryId}/reports (RF-059)'; PRD RF-059 (Could), RF-056. Audience: OPERATOR (content-team reviewers; S7 does not call it, DEC-32). Residency: GLOBAL (home region); TEMPLATE_PUBLIC content only, may be read cross-region; requests and responses never carry engagementId/firmId/userId (RF-056, RF-092); the report carries no user, firm or engagement identifiers. Idempotency: Idempotency-Key required: reportId = UUID v5 of the key (DEC-35). Pagination: n/a.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        201,
+        400,
+        404,
+        409
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status201"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status409"
+    }
+  ],
+  "$defs": {
+    "status201": {
+      "type": "object",
+      "description": "201: Report created.",
+      "properties": {
+        "status": {
+          "const": 201,
+          "description": "Report created."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Created review case.",
+          "properties": {
+            "reportId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Review case id."
+            },
+            "summaryId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Summary id."
+            },
+            "reason": {
+              "type": "string",
+              "enum": [
+                "INCORRECT",
+                "UNCLEAR"
+              ],
+              "description": "Reason."
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Creation instant."
+            }
+          },
+          "required": [
+            "reportId",
+            "summaryId",
+            "reason",
+            "createdAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status409": {
+      "type": "object",
+      "description": "409: Idempotency-Key reused with another body (idempotency-key-reuse).",
+      "properties": {
+        "status": {
+          "const": 409,
+          "description": "Idempotency-Key reused with another body (idempotency-key-reuse)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 409
+                },
+                "type": {
+                  "enum": [
+                    "idempotency-key-reuse"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 201,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "reportId": "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "reason": "UNCLEAR",
+        "createdAt": "2026-10-23T09:05:00Z"
+      }
+    }
+  ]
+}

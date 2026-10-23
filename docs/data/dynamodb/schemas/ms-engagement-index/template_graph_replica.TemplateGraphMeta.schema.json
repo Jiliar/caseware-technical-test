@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/template_graph_replica.TemplateGraphMeta.schema.json",
+  "title": "template_graph_replica item: TemplateGraphMeta",
+  "description": "Per-template replica metadata: last applied templateSeq and staleness (SX-02 fallback GRAPH_STALE). DISENO 'graphStale' boolean is unified into 'state'.",
+  "$comment": "Table template_graph_replica (per cell): local replica of the version DAG fed by EV-03/EV-04 (ADR-018, DEC-04). Item types: TemplateGraphNode (PK = TPL#<templateId>, SK = V#<templateVersion>) and TemplateGraphMeta (PK = TPL#<templateId>, SK = META). AP-I6: TransactWriteItems(node + META.appliedSeq) with condition appliedSeq = seq - 1. No TTL (graph is permanent; WITHDRAWN is never deleted, DISENO 4.6). No GSI.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"TPL#<templateId>\".",
+      "pattern": "^TPL#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"META\".",
+      "const": "META"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "TemplateGraphMeta",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "templateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Template id."
+    },
+    "appliedSeq": {
+      "type": "integer",
+      "description": "Last templateSeq applied in order (AP-I6)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "IN_SYNC",
+        "GRAPH_STALE"
+      ],
+      "description": "IN_SYNC -> GRAPH_STALE when a templateSeq gap is not closed or SX-02 is down; GRAPH_STALE -> IN_SYNC after rehydration (DISENO 'graphStale'). Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "templateId",
+    "appliedSeq",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

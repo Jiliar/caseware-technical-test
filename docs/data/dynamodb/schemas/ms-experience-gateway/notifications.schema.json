@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-experience-gateway/notifications.schema.json",
+  "title": "notifications item (NotificationItem)",
+  "description": "In-app notification inbox per firm: NotificationItem(firmId, kind, refs, createdAt); id = eventId of the source event (DISENO S7 (b)(c)(g)).",
+  "$comment": "Table notifications (per cell). PK = FIRM#<firmId>, SK = <createdAt>#<id>. AP-G2: Query PK (paginated inbox, cursor + limit). Idempotent: PutItem attribute_not_exists with id = eventId. TTL attribute ttl = TTL_notif. kind and refs members are defined in DISENO 3.8.2.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"FIRM#<firmId>\".",
+      "pattern": "^FIRM#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"<createdAt>#<id>\"."
+    },
+    "entityType": {
+      "type": "string",
+      "const": "NotificationItem",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Notification id = eventId of the consumed event."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "PENDING_UPDATES_CHANGED",
+        "OFFER_WITHDRAWN",
+        "APPLIED_WITHDRAWN",
+        "DECISION_RECORDED",
+        "SUMMARY_READY",
+        "SUMMARY_FAILED",
+        "SUMMARY_INVALIDATED"
+      ],
+      "description": "One per consumed event: EV-22, EV-19, EV-21, EV-20, EV-05, EV-06, EV-07 (DISENO 3.8.2)."
+    },
+    "refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "References only (no state, no engagement content), members present according to the source event (DISENO 3.8.2).",
+      "properties": {
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "templateId of the source event, when it has one."
+        },
+        "publishId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "publishId of the source event, when it has one."
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "engagementId of the source event, when it has one."
+        },
+        "summaryId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "summaryId of the source event, when it has one."
+        }
+      }
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter TTL_notif (no value fixed in the docs)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE"
+      ],
+      "description": "Constant ACTIVE; the item expires with TTL_notif. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "id",
+    "firmId",
+    "kind",
+    "refs",
+    "ttl",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

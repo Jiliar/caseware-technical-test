@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/RecomputeEngagementOffers.v1.schema.json",
+  "title": "RecomputeEngagementOffers.v1",
+  "description": "Recompute offers for a template, a firm or a list of engagements (e.g. after a DLQ redrive, runbook 7.4 step 5).",
+  "$comment": "Source: DISENO 4.4 catalog CMD-07; RF-083, RF-084, RF-088. Producer: ms-backfill-reconciler. Consumers: ms-engagement-index. Channel: SQS {cell}-ms-engagement-index-commands. Ordering/partition key: requestId. Idempotency key: requestId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.4). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content. Response event(s): PendingUpdate*.v1, ProjectionDriftDetected.v1.",
+  "x-catalogId": "CMD-07",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-consumers": [
+    "ms-engagement-index"
+  ],
+  "x-channel": "SQS {cell}-ms-engagement-index-commands",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-commands"
+  ],
+  "x-orderingKey": "requestId",
+  "x-idempotencyKey": "requestId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "RecomputeEngagementOffers"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "const": "ms-backfill-reconciler"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Request id = runId of the reconciliation run that emits the command (idempotency key)."
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "TEMPLATE",
+            "FIRM",
+            "ENGAGEMENTS"
+          ],
+          "description": "Recompute scope."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id (required when scope = TEMPLATE)."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id (required when scope = FIRM)."
+        },
+        "engagementIds": {
+          "type": "array",
+          "items": {
+            "$ref": "envelope.schema.json#/$defs/uuid"
+          },
+          "minItems": 1,
+          "description": "Engagement ids (required when scope = ENGAGEMENTS); size bounded by L_lote (no value in the documents)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "DRIFT_THRESHOLD",
+            "OPERATOR_REQUEST"
+          ],
+          "description": "Scheduled run whose discrepancy rate exceeded the threshold for a template, or TARGETED run requested by an operator through POST /v1/reconciliation-runs (DEC-25)."
+        }
+      },
+      "required": [
+        "requestId",
+        "scope",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "TEMPLATE"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "templateId"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "FIRM"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "firmId"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "ENGAGEMENTS"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "engagementIds"
+            ]
+          }
+        }
+      ],
+      "description": "scope TEMPLATE requires templateId, FIRM requires firmId, ENGAGEMENTS requires engagementIds (catalog '?' markers)."
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000036",
+      "eventType": "RecomputeEngagementOffers",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-backfill-reconciler",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000036",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "requestId": "99999999-9999-4999-8999-999999999999",
+        "scope": "TEMPLATE",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "reason": "OPERATOR_REQUEST"
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "PendingUpdate*.v1",
+    "ProjectionDriftDetected.v1"
+  ]
+}

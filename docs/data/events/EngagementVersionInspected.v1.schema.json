@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/EngagementVersionInspected.v1.schema.json",
+  "title": "EngagementVersionInspected.v1",
+  "description": "Result of the ~1 min downstream inspection of one engagement (template and version actually in use). Discarded by the index if observedAt <= lastHookAt.",
+  "$comment": "Source: DISENO 4.3 catalog EV-15; RF-014, RF-021, RF-083. Producer: ms-publish-fanout. Consumers: ms-engagement-index. Channel: SNS ms-publish-fanout -> SQS ms-engagement-index. Ordering/partition key: engagementId. Idempotency key: jobId + engagementId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-15",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-publish-fanout"
+  ],
+  "x-consumers": [
+    "ms-engagement-index"
+  ],
+  "x-channel": "SNS ms-publish-fanout -> SQS ms-engagement-index",
+  "x-snsTopic": "{cell}-ms-publish-fanout-events",
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-ms-publish-fanout"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "jobId + engagementId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "EngagementVersionInspected"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-publish-fanout"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id (= publishId for publish jobs)."
+        },
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id observed."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Version label observed."
+        },
+        "observedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Observation instant."
+        },
+        "priority": {
+          "$ref": "envelope.schema.json#/$defs/priorityClass",
+          "description": "Priority class of the task."
+        },
+        "origin": {
+          "type": "string",
+          "enum": [
+            "PUBLISH",
+            "BACKFILL",
+            "RECONCILIATION",
+            "INTERACTIVE"
+          ],
+          "description": "Origin of the inspection."
+        }
+      },
+      "required": [
+        "jobId",
+        "engagementId",
+        "firmId",
+        "templateId",
+        "version",
+        "observedAt",
+        "priority",
+        "origin"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000015",
+      "eventType": "EngagementVersionInspected",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-publish-fanout",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000015",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v5",
+        "observedAt": "2026-10-22T02:10:00Z",
+        "priority": "BACKFILL",
+        "origin": "BACKFILL"
+      }
+    }
+  ]
+}

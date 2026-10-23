@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/EngagementUpdateDeclined.v1.schema.json",
+  "title": "EngagementUpdateDeclined.v1",
+  "description": "Hook: a user declined a pending update; the base version does not change and the decline does not block future offers (DEC-21).",
+  "$comment": "Source: DISENO 4.3 catalog EV-10; RF-013, RF-061; US-06.1.2. Producer: engagements-system. Consumers: ms-engagement-index. Channel: engagements-system outbox -> cell EventBridge bus -> rule -> SQS {cell}-ms-engagement-index-engagements-system. Ordering/partition key: engagementId + engagementSeq. Idempotency key: eventId. Guarantee: at-least-once. Versioning: contract with the owning team (ADR-015); additive within v1; engagementSeq is optional in v1 (DEC-37). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-10",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "engagements-system"
+  ],
+  "x-consumers": [
+    "ms-engagement-index"
+  ],
+  "x-channel": "engagements-system outbox -> cell EventBridge bus -> rule -> SQS {cell}-ms-engagement-index-engagements-system",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-engagements-system"
+  ],
+  "x-orderingKey": "engagementId + engagementSeq",
+  "x-idempotencyKey": "eventId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "EngagementUpdateDeclined"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "engagements-system"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "declinedVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Declined version label."
+        },
+        "userId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "User who declined."
+        },
+        "summaryId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Summary shown when declining."
+        },
+        "engagementSeq": {
+          "type": "integer",
+          "description": "engagementSeq: monotonic per-engagement sequence emitted by the Engagement System hook (DEC-15). Declared assumption (ADR-021, SUP-21): optional because the legacy system may not provide it; if absent, ordering falls back to (occurredAt, eventId) and reconciliation (DISENO 4.6)."
+        },
+        "decidedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Decision instant."
+        }
+      },
+      "required": [
+        "engagementId",
+        "firmId",
+        "declinedVersion",
+        "userId",
+        "summaryId",
+        "decidedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000010",
+      "eventType": "EngagementUpdateDeclined",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "engagements-system",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": null,
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "declinedVersion": "v5",
+        "userId": "44444444-4444-4444-8444-444444444444",
+        "summaryId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "engagementSeq": 12,
+        "decidedAt": "2026-09-01T09:30:00Z"
+      }
+    }
+  ]
+}

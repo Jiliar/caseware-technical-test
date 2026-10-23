@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/CancelFanOutJob.v1.schema.json",
+  "title": "CancelFanOutJob.v1",
+  "description": "Cancel a fan-out job: tasks not started become OBSOLETE (CANCELLED) and running ones finish and are discarded (FW-014). Sent by ms-backfill-reconciler when a campaign is paused (DEC-24).",
+  "$comment": "Source: DISENO 4.4 catalog CMD-05; RF-111, RF-121; US-08.2.1. Producer: ms-backfill-reconciler. Consumers: ms-publish-fanout. Channel: SQS {cell}-ms-publish-fanout-commands. Ordering/partition key: jobId. Idempotency key: jobId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.4). Stays inside its cell; operational metadata only (ids, counters, hashes). Response event(s): FanOutCompleted.v1 (CANCELLED).",
+  "x-catalogId": "CMD-05",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-consumers": [
+    "ms-publish-fanout"
+  ],
+  "x-channel": "SQS {cell}-ms-publish-fanout-commands",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-publish-fanout-commands"
+  ],
+  "x-orderingKey": "jobId",
+  "x-idempotencyKey": "jobId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "CancelFanOutJob"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "const": "ms-backfill-reconciler"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "CAMPAIGN_PAUSED"
+          ],
+          "description": "Why ms-backfill-reconciler cancels the job: its campaign was paused (manually or automatically, RNF-035). Operators cancel through POST /v1/jobs/{jobId}:cancel, which sends no message (DEC-24)."
+        }
+      },
+      "required": [
+        "jobId",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000034",
+      "eventType": "CancelFanOutJob",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-backfill-reconciler",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000034",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "reason": "CAMPAIGN_PAUSED"
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "FanOutCompleted.v1 (CANCELLED)"
+  ]
+}

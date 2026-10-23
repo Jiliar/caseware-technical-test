@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-publish-fanout/fanout_job.schema.json",
+  "title": "fanout_job item (FanOutJob)",
+  "description": "Fan-out job with incremental counters (DISENO S4 (b)(c); CMD-03). DISENO 'status' is unified as 'state'.",
+  "$comment": "Table fanout_job (per cell). PK = JOB#<jobId>, SK = META. AP-F6 cancel: UpdateItem cancelRequested=true; AP-F7 progress: GetItem; AP-F8 retry: condition on lastRetryRequestId. Idempotent create: PutItem attribute_not_exists(PK), jobId = publishId for a publish. TTL attribute ttl = TTL_job after the job ends (DISENO 5.1). Streams NEW_AND_OLD_IMAGES -> FanOutCompleted.v1 when the job reaches a terminal state (DEC-28).",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"JOB#<jobId>\".",
+      "pattern": "^JOB#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"META\".",
+      "const": "META"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "FanOutJob",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "jobId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Job id (= publishId for a publish)."
+    },
+    "publishId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Publish id (optional, CMD-03)."
+    },
+    "templateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Template id (optional, CMD-03)."
+    },
+    "targetVersion": {
+      "type": "string",
+      "description": "Target version label (optional, CMD-03)."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "INTERACTIVE",
+        "PUBLISH",
+        "BACKFILL",
+        "RECONCILIATION"
+      ],
+      "description": "PriorityClass (DISENO S4 (b))."
+    },
+    "expected": {
+      "type": "integer",
+      "description": "Expected tasks."
+    },
+    "done": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Tasks DONE."
+    },
+    "failed": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Tasks FAILED (logical DLQ)."
+    },
+    "obsolete": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Tasks OBSOLETE (cancelled, withdrawn version or newer publication)."
+    },
+    "cancelRequested": {
+      "type": "boolean",
+      "description": "Cancellation requested (FW-014)."
+    },
+    "lastRetryRequestId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "requestId of the last retry of FAILED tasks (= Idempotency-Key of the operator API or requestId of RetryFanOutTasks.v1); a retry with the same id is a no-op (DEC-35)."
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter TTL_job (no value fixed in the docs). Set when the job reaches a terminal state."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "RUNNING",
+        "PAUSED",
+        "COMPLETED",
+        "PARTIAL",
+        "CANCELLED"
+      ],
+      "description": "RUNNING <-> PAUSED (operator API); with no non-terminal task left -> COMPLETED (no FAILED), PARTIAL (some FAILED) or CANCELLED (cancelRequested); PARTIAL -> RUNNING on a retry of FAILED tasks. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "jobId",
+    "priority",
+    "expected",
+    "done",
+    "failed",
+    "obsolete",
+    "cancelRequested",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

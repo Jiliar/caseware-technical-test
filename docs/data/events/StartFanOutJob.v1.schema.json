@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/StartFanOutJob.v1.schema.json",
+  "title": "StartFanOutJob.v1",
+  "description": "Create a fan-out job (idempotent by jobId; jobId = publishId for a publish).",
+  "$comment": "Source: DISENO 4.4 catalog CMD-03; RF-100; FW-001; US-03.1.1. Producer: ms-engagement-index, ms-backfill-reconciler, ms-experience-gateway. Consumers: ms-publish-fanout. Channel: SQS {cell}-ms-publish-fanout-commands. Ordering/partition key: jobId. Idempotency key: jobId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.4). Stays inside its cell; operational metadata only (ids, counters, hashes). Response event(s): FanOutCompleted.v1.",
+  "x-catalogId": "CMD-03",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index",
+    "ms-backfill-reconciler",
+    "ms-experience-gateway"
+  ],
+  "x-consumers": [
+    "ms-publish-fanout"
+  ],
+  "x-channel": "SQS {cell}-ms-publish-fanout-commands",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-publish-fanout-commands"
+  ],
+  "x-orderingKey": "jobId",
+  "x-idempotencyKey": "jobId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "StartFanOutJob"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "enum": [
+        "ms-engagement-index",
+        "ms-backfill-reconciler",
+        "ms-experience-gateway"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id (= publishId for publish jobs)."
+        },
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id, for publish jobs."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id, if the job targets a template."
+        },
+        "targetVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Target version, if any."
+        },
+        "priority": {
+          "$ref": "envelope.schema.json#/$defs/priorityClass",
+          "description": "Priority class of the job."
+        },
+        "expectedTotal": {
+          "type": "integer",
+          "description": "Expected number of tasks, if known.",
+          "minimum": 0
+        },
+        "deadline": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Deadline of the job, if any."
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "INSPECT"
+          ],
+          "description": "Downstream operation (SUP-08)."
+        }
+      },
+      "required": [
+        "jobId",
+        "priority",
+        "operation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000032",
+      "eventType": "StartFanOutJob",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000032",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "priority": "BACKFILL",
+        "expectedTotal": 500,
+        "operation": "INSPECT"
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "FanOutCompleted.v1"
+  ]
+}

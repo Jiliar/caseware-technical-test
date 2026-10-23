@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/FirmPendingUpdatesChanged.v1.schema.json",
+  "title": "FirmPendingUpdatesChanged.v1",
+  "description": "Per-firm counter deltas used to light the indicator via SSE. Written as an item in the ms-engagement-index outbox table (not an item transition). Never carries the list of engagements.",
+  "$comment": "Source: DISENO 4.3 catalog EV-22; RF-030, RF-032; US-04.3.1. Producer: ms-engagement-index. Consumers: ms-experience-gateway. Channel: SNS ms-engagement-index -> SQS ms-experience-gateway. Ordering/partition key: firmId. Idempotency key: eventId. Guarantee: at-least-once, coalescible. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-22",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-experience-gateway"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS ms-experience-gateway",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-experience-gateway-ms-engagement-index"
+  ],
+  "x-orderingKey": "firmId",
+  "x-idempotencyKey": "eventId",
+  "x-deliveryGuarantee": "at-least-once, coalescible",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "FirmPendingUpdatesChanged"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id, when the change is scoped to a template."
+        },
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id, when caused by a publish."
+        },
+        "pendingDelta": {
+          "type": "integer",
+          "description": "Change in the number of pending offers (may be negative)."
+        },
+        "unclassifiedDelta": {
+          "type": "integer",
+          "description": "Change in the number of unclassified engagements (may be negative)."
+        },
+        "occurredAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Instant of the change."
+        }
+      },
+      "required": [
+        "firmId",
+        "pendingDelta",
+        "unclassifiedDelta",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000022",
+      "eventType": "FirmPendingUpdatesChanged",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000022",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "pendingDelta": 125,
+        "unclassifiedDelta": 0,
+        "occurredAt": "2026-10-22T10:00:06Z"
+      }
+    }
+  ]
+}

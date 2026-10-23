@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-experience-gateway/getPendingUpdateDiff.response.schema.json",
+  "title": "getPendingUpdateDiff response",
+  "description": "GET /v1/engagements/{engagementId}/pending-update/diff - responses per status code.",
+  "$comment": "Source: DISENO S7 (e), 3.8.6 DiffPage, DEC-34; SX-01b (S2 /diff behind it, with its TimeLimiter/CircuitBreaker/Retry); PRD RF-035. Audience: PUBLIC. Residency: REGIONAL engagement lookup + global TEMPLATE_PUBLIC diff content. Idempotency: safe read (GET). Pagination: cursor + limit <= N_pagemax.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        404,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Page of the diff of the pending offer.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Page of the diff of the pending offer."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "../_shared/DiffPage.schema.json"
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Engagement not found or without a pending offer (not-found), or its summary is still being generated (summary-pending).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Engagement not found or without a pending offer (not-found), or its summary is still being generated (summary-pending)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found",
+                    "summary-pending"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+        "items": [
+          {
+            "path": "/sections/planning/checklist/items/12",
+            "changeType": "ADDED",
+            "label": "Planning checklist - question 12",
+            "after": {
+              "text": "Have related-party disclosures been reviewed?"
+            }
+          }
+        ],
+        "nextCursor": "L3NlY3Rpb25zL3BsYW5uaW5n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/VersionGraphNodeAdded.v1.schema.json",
+  "title": "VersionGraphNodeAdded.v1",
+  "description": "Validated and sequenced node added to a template version DAG. Replicated to every cell (local DAG replica in ms-engagement-index) and consumed by ms-change-summary to pre-generate the parent->child summary. Template metadata only.",
+  "$comment": "Source: DISENO 4.3 catalog EV-03; RF-002, RF-003, RF-018, RF-091; US-01.1.1, US-07.1.2. Producer: ms-template-catalog. Consumers: ms-engagement-index, ms-change-summary. Channel: global EventBridge bus -> rule -> SQS of ms-change-summary; global bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS. Ordering/partition key: templateId + templateSeq. Idempotency key: eventId; (templateId, templateSeq). Guarantee: at-least-once; order rebuilt by templateSeq. Versioning: additive within v1 (DISENO 4.2). dataClass: TEMPLATE_PUBLIC (DISENO 4.3). Crosses regions (whitelisted in the EventBridge rules); must not contain engagementId, firmId, userId or free text (contract test, DISENO 4.1).",
+  "x-catalogId": "EV-03",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": true,
+  "x-producers": [
+    "ms-template-catalog"
+  ],
+  "x-consumers": [
+    "ms-engagement-index",
+    "ms-change-summary"
+  ],
+  "x-channel": "global EventBridge bus -> rule -> SQS of ms-change-summary; global bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-ms-template-catalog",
+    "global-ms-change-summary-ms-template-catalog"
+  ],
+  "x-orderingKey": "templateId + templateSeq",
+  "x-idempotencyKey": "eventId; (templateId, templateSeq)",
+  "x-deliveryGuarantee": "at-least-once; order rebuilt by templateSeq",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "VersionGraphNodeAdded"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-template-catalog"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Version label of the new node."
+        },
+        "parents": {
+          "type": "array",
+          "items": {
+            "$ref": "envelope.schema.json#/$defs/versionLabel"
+          },
+          "description": "Parent version labels (same meaning as TemplateGraphNode.parents)."
+        },
+        "branch": {
+          "type": "string",
+          "description": "Market branch."
+        },
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id from TemplateVersionPublished.v1."
+        },
+        "templateSeq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "templateSeq assigned by ms-template-catalog, monotonic per template (ADR-018, DEC-03). Consumers apply strictly in order (appliedSeq = templateSeq - 1). minimum 1 because template.last_seq starts at 0 (DISENO S1 V1__registry_baseline.sql)."
+        },
+        "publishedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Publication instant."
+        }
+      },
+      "required": [
+        "templateId",
+        "version",
+        "parents",
+        "branch",
+        "publishId",
+        "templateSeq",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000003",
+      "eventType": "VersionGraphNodeAdded",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-template-catalog",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000003",
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v7",
+        "parents": [
+          "v5"
+        ],
+        "branch": "main",
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "templateSeq": 8,
+        "publishedAt": "2026-10-22T10:00:00Z"
+      }
+    }
+  ]
+}

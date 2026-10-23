@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-change-summary/getSummary.response.schema.json",
+  "title": "getSummary response",
+  "description": "GET /v1/summaries/{summaryId} - responses per status code. One immutable summary with provenance (also used by ms-audit-ledger for regulatory reconstruction).",
+  "$comment": "Source: DISENO S2 (e), AP-S2; DISENO 4.8 SX-01b, SX-06; ADR-020; PRD RF-047, RNF-025. Audience: INTERNAL service-to-service - SX-01b and SX-06 callee. Residency: GLOBAL (home region); TEMPLATE_PUBLIC content only, may be read cross-region; requests and responses never carry engagementId/firmId/userId (RF-056, RF-092). Idempotency: safe read (GET). Pagination: none (single resource).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        404
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Summary.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Summary."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "../_shared/SummaryRecord.schema.json"
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "from": "v3",
+        "to": "v7",
+        "locale": "en-CA",
+        "kind": "NARRATIVE",
+        "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+        "promptVersion": "p-2026-10",
+        "modelId": "example-model-2026-01-01",
+        "outputHash": "0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9",
+        "generatedAt": "2026-10-22T10:02:00Z",
+        "invalidatedAt": null,
+        "output": {
+          "headline": "Revenue section reorganised and one new checklist question",
+          "changes": [
+            {
+              "description": "A new question about related-party disclosures was added to the planning checklist.",
+              "diffPaths": [
+                "/sections/planning/checklist/items/12"
+              ]
+            }
+          ],
+          "impact": "Engagements that apply v7 get one more planning question to answer."
+        }
+      }
+    }
+  ]
+}

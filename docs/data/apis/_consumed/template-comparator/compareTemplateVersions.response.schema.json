@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/template-comparator/compareTemplateVersions.response.schema.json",
+  "title": "compareTemplateVersions response",
+  "description": "compareTemplateVersions - responses per status code. Existing synchronous template comparator ('fast and reliable', E-26) returning the diff between two template versions.",
+  "$comment": "Source: DISENO S2 (d) TemplateDiffPort (comparator, ACL), (h) TimeLimiter(T_api) -> CircuitBreaker(template-comparator) -> Retry(N_reint); DISENO 4.8 SX-05; ADR-020 SX-05; E-26; DISENO 5.2. Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-05 (S2 -> existing comparator). Residency: GLOBAL (home region); template content only (TEMPLATE_PUBLIC). Idempotency: safe read. Pagination: n/a. CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: ChangeSummaryFailed.v1 + deferred retry.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Success as expected by the client.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Success as expected by the client."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Comparator output (shape not defined in the documents, derived).",
+          "properties": {
+            "changes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "Diff path.",
+                    "minLength": 1
+                  },
+                  "changeType": {
+                    "type": "string",
+                    "enum": [
+                      "ADDED",
+                      "REMOVED",
+                      "MODIFIED"
+                    ],
+                    "description": "Change type."
+                  },
+                  "before": {
+                    "description": "Value before."
+                  },
+                  "after": {
+                    "description": "Value after."
+                  }
+                },
+                "required": [
+                  "path",
+                  "changeType"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Diff entries; S2 canonicalises them and computes diffHash (SHA-256). Shape unknown, derived."
+            }
+          },
+          "required": [
+            "changes"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused.",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it.",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "66666666-6666-4666-8666-666666666666"
+      },
+      "body": {
+        "changes": [
+          {
+            "path": "/sections/planning/checklist/items/12",
+            "changeType": "ADDED",
+            "after": {
+              "text": "Have related-party disclosures been reviewed?"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

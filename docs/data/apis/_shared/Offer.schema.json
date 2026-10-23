@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/Offer.schema.json",
+  "title": "Offer",
+  "description": "The single pending-update offer of an engagement (DISENO S3 (b): Offer(target, since, status, previouslyDeclined[])).",
+  "$comment": "Source: DISENO S3 (b); engagement_state (offerTarget, offerSince, offerStatus, previouslyDeclined); EV-17. Audience: public (via S7) and internal (S3). Residency: regional (cell of the firm).",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Offer target version (version label issued by the Templates Service, not a uuid, e.g. 'v7')."
+    },
+    "since": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Instant the offer was materialised (offerSince)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "APPLIED",
+        "DECLINED",
+        "WITHDRAWN",
+        "SUPERSEDED",
+        "APPLIED_WITHDRAWN"
+      ],
+      "description": "Offer status (same values as engagement_state.offerStatus)."
+    },
+    "previouslyDeclined": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Version labels the user declined before that are contained in the target (annotation only, DEC-21; RF-050)."
+    }
+  },
+  "required": [
+    "target",
+    "since",
+    "status",
+    "previouslyDeclined"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "target": "v7",
+      "since": "2026-10-22T10:00:05Z",
+      "status": "PENDING",
+      "previouslyDeclined": [
+        "v5"
+      ]
+    }
+  ]
+}

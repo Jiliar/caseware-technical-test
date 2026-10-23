@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-template-catalog/getTemplateGraph.response.schema.json",
+  "title": "getTemplateGraph response",
+  "description": "GET /v1/templates/{templateId}/graph - responses per status code. Snapshot of a template's version DAG from a templateSeq, to close a sequence gap or bootstrap a cell replica (very low frequency). Fallback in the caller: template marked GRAPH_STALE.",
+  "$comment": "Source: DISENO S1 (d) GraphSnapshotQuery / GraphController, (e), AP-R4 (template_id, seq); DISENO 4.5 (f), 4.6; DISENO 4.8 SX-02; ADR-020 SX-02; ADR-018. Audience: INTERNAL service-to-service - SX-02 callee. Residency: GLOBAL (home region); TEMPLATE_PUBLIC metadata, replicable to every region. Idempotency: safe read (GET). Pagination: sinceSeq + cursor + limit <= N_pagemax (DISENO 3.1 (e), 3.8.5).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        404
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Page of graph nodes.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Page of graph nodes."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Page envelope (_shared/pagination.schema.json).",
+          "properties": {
+            "templateId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Template id."
+            },
+            "lastSeq": {
+              "type": "integer",
+              "description": "Current template.last_seq.",
+              "minimum": 0
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "description": "TemplateVersion node (DISENO S1 (b)); metadata only, same fields as EV-03/EV-04.",
+                "properties": {
+                  "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Template id."
+                  },
+                  "version": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Version (version label issued by the Templates Service, not a uuid, e.g. 'v7')."
+                  },
+                  "parents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": "Parent version labels (>= 2 on a merge)."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "Market branch.",
+                    "minLength": 1
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PUBLISHED",
+                      "WITHDRAWN"
+                    ],
+                    "description": "Version status (template_version.status)."
+                  },
+                  "publishId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Publish id."
+                  },
+                  "templateSeq": {
+                    "type": "integer",
+                    "description": "Total order per template (ADR-018).",
+                    "minimum": 1
+                  },
+                  "publishedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Publication instant."
+                  },
+                  "withdrawnAt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time",
+                    "description": "Withdrawal instant, null if PUBLISHED."
+                  }
+                },
+                "required": [
+                  "templateId",
+                  "version",
+                  "parents",
+                  "branch",
+                  "status",
+                  "publishId",
+                  "templateSeq",
+                  "publishedAt",
+                  "withdrawnAt"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Nodes ordered by templateSeq."
+            },
+            "nextCursor": {
+              "$ref": "../_shared/pagination.schema.json#/$defs/nextCursor"
+            }
+          },
+          "required": [
+            "templateId",
+            "lastSeq",
+            "items",
+            "nextCursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "lastSeq": 8,
+        "items": [
+          {
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "version": "v6",
+            "parents": [
+              "v5"
+            ],
+            "branch": "main",
+            "status": "PUBLISHED",
+            "publishId": "67676767-6767-4676-8676-676767676767",
+            "templateSeq": 7,
+            "publishedAt": "2026-10-15T10:00:00Z",
+            "withdrawnAt": null
+          },
+          {
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "version": "v7",
+            "parents": [
+              "v6"
+            ],
+            "branch": "main",
+            "status": "PUBLISHED",
+            "publishId": "66666666-6666-4666-8666-666666666666",
+            "templateSeq": 8,
+            "publishedAt": "2026-10-22T10:00:00Z",
+            "withdrawnAt": null
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

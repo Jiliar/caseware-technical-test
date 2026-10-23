@@ -1,0 +1,18 @@
+{
+  "PK": "TPL#33333333-3333-4333-8333-333333333333",
+  "SK": "V#v7",
+  "entityType": "TemplateGraphNode",
+  "templateId": "33333333-3333-4333-8333-333333333333",
+  "templateVersion": "v7",
+  "parents": [
+    "v5"
+  ],
+  "branch": "main",
+  "seq": 9,
+  "version": 1,
+  "createdBy": "00000000-0000-4000-8000-000000000001",
+  "createdAt": "2026-10-22T10:00:00Z",
+  "updatedBy": "00000000-0000-4000-8000-000000000001",
+  "updatedAt": "2026-10-22T10:00:05Z",
+  "state": "PUBLISHED"
+}

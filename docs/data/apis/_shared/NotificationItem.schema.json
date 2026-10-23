@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/NotificationItem.schema.json",
+  "title": "NotificationItem",
+  "description": "Firm notification of the inbox and of the SSE stream (DISENO S7 (b) NotificationItem(firmId, kind, refs, createdAt)).",
+  "$comment": "Source: DISENO S7 (b)(c)(g); dynamo notifications item (id, firmId, kind, refs, createdAt); PRD RF-032. Audience: public. Residency: regional.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Notification id = eventId of the consumed event (idempotency, DISENO S7 (g)); also the SSE event id."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "PENDING_UPDATES_CHANGED",
+        "OFFER_WITHDRAWN",
+        "APPLIED_WITHDRAWN",
+        "DECISION_RECORDED",
+        "SUMMARY_READY",
+        "SUMMARY_FAILED",
+        "SUMMARY_INVALIDATED"
+      ],
+      "description": "One per consumed event: EV-22, EV-19, EV-21, EV-20, EV-05, EV-06, EV-07 (DISENO 3.8.2)."
+    },
+    "refs": {
+      "type": "object",
+      "description": "References only (no state, no engagement content): the client treats a notification as 'there are changes, fetch again' (DISENO S7 (g)). Members present according to the source event (DISENO 3.8.2).",
+      "properties": {
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Template id."
+        },
+        "publishId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Publish id."
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Engagement id."
+        },
+        "summaryId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Summary id."
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Creation instant."
+    }
+  },
+  "required": [
+    "id",
+    "firmId",
+    "kind",
+    "refs",
+    "createdAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "firmId": "22222222-2222-4222-8222-222222222222",
+      "kind": "PENDING_UPDATES_CHANGED",
+      "refs": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "publishId": "66666666-6666-4666-8666-666666666666"
+      },
+      "createdAt": "2026-10-22T10:00:06Z"
+    }
+  ]
+}

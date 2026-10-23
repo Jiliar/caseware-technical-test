@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/GenerateChangeSummary.v1.schema.json",
+  "title": "GenerateChangeSummary.v1",
+  "description": "Request to generate (once, single-flight) the summaries of a version pair for the given locales. Crosses from the cell to the global region, so by contract it carries no engagement, firm or user data (RF-056, INV-06).",
+  "$comment": "Source: DISENO 4.4 catalog CMD-01; RF-045, RF-050; US-05.1.3. Producer: ms-engagement-index, ms-experience-gateway. Consumers: ms-change-summary. Channel: cell EventBridge bus -> global EventBridge bus (only cell->global flow) -> rule -> SQS global-ms-change-summary-commands. Ordering/partition key: summaryKey (templateId, from, to). Idempotency key: summaryKey (single-flight). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: TEMPLATE_PUBLIC (DISENO 4.4). Crosses regions (whitelisted in the EventBridge rules); must not contain engagementId, firmId, userId or free text (contract test, DISENO 4.1). Response event(s): ChangeSummaryReady.v1, ChangeSummaryFailed.v1.",
+  "x-catalogId": "CMD-01",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": true,
+  "x-producers": [
+    "ms-engagement-index",
+    "ms-experience-gateway"
+  ],
+  "x-consumers": [
+    "ms-change-summary"
+  ],
+  "x-channel": "cell EventBridge bus -> global EventBridge bus (only cell->global flow) -> rule -> SQS global-ms-change-summary-commands",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "global-ms-change-summary-commands"
+  ],
+  "x-orderingKey": "summaryKey (templateId, from, to)",
+  "x-idempotencyKey": "summaryKey (single-flight)",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "GenerateChangeSummary"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "enum": [
+        "ms-engagement-index",
+        "ms-experience-gateway"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "from": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Source version label (the engagement's real base)."
+        },
+        "to": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Target version label."
+        },
+        "locales": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Locales to generate (minItems 1: an empty request is never sent)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "PUBLISH",
+            "ON_DEMAND"
+          ],
+          "description": "Why generation is requested."
+        }
+      },
+      "required": [
+        "templateId",
+        "from",
+        "to",
+        "locales",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000030",
+      "eventType": "GenerateChangeSummary",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000030",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "from": "v3",
+        "to": "v7",
+        "locales": [
+          "en-CA",
+          "fr-CA"
+        ],
+        "reason": "PUBLISH"
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "ChangeSummaryReady.v1",
+    "ChangeSummaryFailed.v1"
+  ]
+}

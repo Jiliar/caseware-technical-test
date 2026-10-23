@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/PublishProjectionCompleted.v1.schema.json",
+  "title": "PublishProjectionCompleted.v1",
+  "description": "All projection units of a publish closed in this cell; INCOMPLETE triggers a targeted reconciliation in ms-backfill-reconciler.",
+  "$comment": "Source: DISENO 4.3 catalog EV-23; RF-084; US-10.2.2. Producer: ms-engagement-index. Consumers: ms-backfill-reconciler. Channel: SNS ms-engagement-index -> SQS ms-backfill-reconciler. Ordering/partition key: publishId. Idempotency key: publishId + cellId (envelope). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.3). Stays inside its cell; operational metadata only (ids, counters, hashes).",
+  "x-catalogId": "EV-23",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS ms-backfill-reconciler",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-backfill-reconciler-ms-engagement-index"
+  ],
+  "x-orderingKey": "publishId",
+  "x-idempotencyKey": "publishId + cellId (envelope)",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "PublishProjectionCompleted"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Published version label."
+        },
+        "expectedUnits": {
+          "type": "integer",
+          "description": "Expected projection units.",
+          "minimum": 0
+        },
+        "completedUnits": {
+          "type": "integer",
+          "description": "Completed projection units.",
+          "minimum": 0
+        },
+        "affected": {
+          "type": "integer",
+          "description": "Engagements affected in this cell.",
+          "minimum": 0
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "COMPLETE",
+            "INCOMPLETE"
+          ],
+          "description": "Completeness outcome."
+        },
+        "durationMs": {
+          "type": "integer",
+          "description": "Projection duration in milliseconds.",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "publishId",
+        "templateId",
+        "version",
+        "expectedUnits",
+        "completedUnits",
+        "affected",
+        "outcome",
+        "durationMs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000023",
+      "eventType": "PublishProjectionCompleted",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000023",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v7",
+        "expectedUnits": 16,
+        "completedUnits": 16,
+        "affected": 20000,
+        "outcome": "COMPLETE",
+        "durationMs": 4200
+      }
+    }
+  ]
+}

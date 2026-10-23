@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/template-comparator/compareTemplateVersions.request.schema.json",
+  "title": "compareTemplateVersions request",
+  "description": "compareTemplateVersions - request. Existing synchronous template comparator ('fast and reliable', E-26) returning the diff between two template versions.",
+  "$comment": "Source: DISENO S2 (d) TemplateDiffPort (comparator, ACL), (h) TimeLimiter(T_api) -> CircuitBreaker(template-comparator) -> Retry(N_reint); DISENO 4.8 SX-05; ADR-020 SX-05; E-26; DISENO 5.2. Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-05 (S2 -> existing comparator). Residency: GLOBAL (home region); template content only (TEMPLATE_PUBLIC). Idempotency: safe read. Pagination: n/a. CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: ChangeSummaryFailed.v1 + deferred retry.",
+  "type": "object",
+  "properties": {
+    "headers": {
+      "type": "object",
+      "description": "Headers the client propagates when the transport allows it.",
+      "properties": {
+        "correlation-id": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+        },
+        "traceparent": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/traceparent"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "body": {
+      "type": "object",
+      "description": "JSON request body.",
+      "properties": {
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Template id."
+        },
+        "from": {
+          "type": "string",
+          "description": "From version label.",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "description": "To version label.",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "templateId",
+        "from",
+        "to"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "headers",
+    "body"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "headers": {
+        "correlation-id": "66666666-6666-4666-8666-666666666666"
+      },
+      "body": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "from": "v3",
+        "to": "v7"
+      }
+    }
+  ]
+}

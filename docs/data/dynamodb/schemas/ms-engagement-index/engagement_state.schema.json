@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/engagement_state.schema.json",
+  "title": "engagement_state item (EngagementState)",
+  "description": "Per-engagement projection: real base version, single offer, decline history (annotation only, DEC-21), sequence guards. No workpaper content (RF-010). Source: DISENO S3 (b)(c), PRD RF-010, §2.4.",
+  "$comment": "Table engagement_state (per cell). PK = ENG#<engagementId>, SK = STATE. GSI1 (inverted index, RF-017): GSI1PK = TV#<templateId>#<currentVersion>#S<shard>, GSI1SK = <engagementId>, projection INCLUDE firmId, branch, offerTarget, version. GSI2 (firm listing, RF-033): GSI2PK = FIRM#<firmId>#S<shard>, GSI2SK = <offerStatus>#<offerSince>#<engagementId> or NONE#<engagementId> without offer (DEC-29); projection INCLUDE engagementId, templateId, branch, currentVersion, state, offerTarget, offerSince, offerStatus, previouslyDeclined, flags, updatedAt. shard = hash(engagementId) mod N_shards (DEC-10). TTL attribute: ttl, set only on ARCHIVED tombstones (TTL_tomb, DISENO 4.6). Access patterns: AP-I1 GetItem PK; AP-I2 Query GSI1 x N_shards; AP-I3 conditional UpdateItem (version, lastSeq); AP-I4 Query GSI2 x N_shards; AP-I9 Query GSI2 begins_with APPLIED_WITHDRAWN#; AP-I10 Query GSI2 begins_with NONE#. Streams NEW_AND_OLD_IMAGES feed the CDC-outbox relay (ADR-019, DEC-06). 'state' carries DISENO 'classification'. GSI1 keys only while state = CLASSIFIED. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27).",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"ENG#<engagementId>\".",
+      "pattern": "^ENG#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"STATE\".",
+      "const": "STATE"
+    },
+    "GSI1PK": {
+      "type": "string",
+      "description": "GSI1 partition key (inverted index). GSI1PK = \"TV#<templateId>#<currentVersion>#S<shard>\". Present only once the base version is known (CLASSIFIED).",
+      "pattern": "^TV#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}#.+#S[0-9]+$"
+    },
+    "GSI1SK": {
+      "type": "string",
+      "description": "GSI1 sort key. GSI1SK = \"<engagementId>\".",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "GSI2PK": {
+      "type": "string",
+      "description": "GSI2 partition key (listing by firm). GSI2PK = \"FIRM#<firmId>#S<shard>\".",
+      "pattern": "^FIRM#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}#S[0-9]+$"
+    },
+    "GSI2SK": {
+      "type": "string",
+      "description": "GSI2 sort key. GSI2SK = \"<offerStatus>#<offerSince>#<engagementId>\"; with no offer (offerStatus NONE) GSI2SK = \"NONE#<engagementId>\" (DEC-29).",
+      "pattern": "^((PENDING|APPLIED|DECLINED|WITHDRAWN|SUPERSEDED|APPLIED_WITHDRAWN)#[^#]+#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|NONE#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "EngagementState",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "engagementId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Engagement id (RF-010)."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id (tenant and residency unit)."
+    },
+    "region": {
+      "type": "string",
+      "description": "Residency region / cell of the firm (e.g. EU, CA)."
+    },
+    "templateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Template id."
+    },
+    "branch": {
+      "type": "string",
+      "description": "Market branch of the engagement lineage (A.2-e)."
+    },
+    "currentVersion": {
+      "type": "string",
+      "description": "Real base version label (PRD 'current version')."
+    },
+    "offerTarget": {
+      "type": "string",
+      "description": "Offer target version label (PRD RF-010 offerTarget)."
+    },
+    "offerSince": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Instant the offer was materialised (PRD pendingSince)."
+    },
+    "offerStatus": {
+      "type": "string",
+      "enum": [
+        "NONE",
+        "PENDING",
+        "APPLIED",
+        "DECLINED",
+        "WITHDRAWN",
+        "SUPERSEDED",
+        "APPLIED_WITHDRAWN"
+      ],
+      "description": "Offer status (DISENO 3.8.2): NONE = no offer yet; SUPERSEDED/WITHDRAWN stay only when there is no new target; APPLIED_WITHDRAWN stays until a new offer appears."
+    },
+    "previouslyDeclined": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Version labels previously declined and contained in the target (annotation, A.2-c; EV-17)."
+    },
+    "declineHistory": {
+      "type": "array",
+      "description": "DeclineRecord list: audit/annotation only, never filters eligibility (DEC-21). Fields from EV-10.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "declinedVersion",
+          "userId",
+          "summaryId",
+          "decidedAt"
+        ],
+        "properties": {
+          "declinedVersion": {
+            "type": "string",
+            "description": "Declined version label."
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "User who declined."
+          },
+          "summaryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Summary shown when declining."
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Decision instant."
+          }
+        }
+      }
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "APPLIED_WITHDRAWN"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Flags (DISENO S3 (b))."
+    },
+    "lastSeq": {
+      "type": "integer",
+      "description": "Last applied engagementSeq (RF-081). Condition: attribute_not_exists(lastSeq) OR lastSeq < :seq."
+    },
+    "lastHookAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Instant of the last hook; inspections with observedAt <= lastHookAt are discarded (RF-014)."
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter TTL_tomb (no value fixed in the docs). Only set when state = ARCHIVED (tombstone, DISENO 4.6)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "UNCLASSIFIED",
+        "CLASSIFIED",
+        "ARCHIVED"
+      ],
+      "description": "Classification (DISENO 'classification'): UNCLASSIFIED -> CLASSIFIED -> ARCHIVED (tombstone). Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "GSI2PK",
+    "GSI2SK",
+    "entityType",
+    "engagementId",
+    "firmId",
+    "region",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state",
+    "offerStatus"
+  ],
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "CLASSIFIED"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "GSI1PK",
+          "GSI1SK",
+          "templateId",
+          "branch",
+          "currentVersion"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "ARCHIVED"
+          }
+        },
+        "required": [
+          "state"
+        ]
+      },
+      "then": {
+        "required": [
+          "ttl"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "offerStatus": {
+            "not": {
+              "const": "NONE"
+            }
+          }
+        },
+        "required": [
+          "offerStatus"
+        ]
+      },
+      "then": {
+        "required": [
+          "offerTarget",
+          "offerSince"
+        ]
+      }
+    }
+  ]
+}

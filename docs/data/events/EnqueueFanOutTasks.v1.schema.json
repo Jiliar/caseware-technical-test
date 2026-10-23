@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/EnqueueFanOutTasks.v1.schema.json",
+  "title": "EnqueueFanOutTasks.v1",
+  "description": "Chunk of engagement references to add as tasks to a job.",
+  "$comment": "Source: DISENO 4.4 catalog CMD-04; RF-100, RF-101; FW-002. Producer: ms-engagement-index, ms-backfill-reconciler, ms-experience-gateway. Consumers: ms-publish-fanout. Channel: SQS {cell}-ms-publish-fanout-commands. Ordering/partition key: jobId. Idempotency key: jobId + chunkNo (and per task (jobId, engagementId)). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.4). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content. Response event(s): EngagementVersionInspected.v1 (one per task).",
+  "x-catalogId": "CMD-04",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index",
+    "ms-backfill-reconciler",
+    "ms-experience-gateway"
+  ],
+  "x-consumers": [
+    "ms-publish-fanout"
+  ],
+  "x-channel": "SQS {cell}-ms-publish-fanout-commands",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-publish-fanout-commands"
+  ],
+  "x-orderingKey": "jobId",
+  "x-idempotencyKey": "jobId + chunkNo (and per task (jobId, engagementId))",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "EnqueueFanOutTasks"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "enum": [
+        "ms-engagement-index",
+        "ms-backfill-reconciler",
+        "ms-experience-gateway"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id."
+        },
+        "chunkNo": {
+          "type": "integer",
+          "description": "Chunk number within the job.",
+          "minimum": 0
+        },
+        "lastChunk": {
+          "type": "boolean",
+          "description": "True on the last chunk of the job."
+        },
+        "refs": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Engagement references; size bounded by the named parameter L_lote (no value in the documents). minItems 1: an empty batch is never emitted.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "engagementId": {
+                "$ref": "envelope.schema.json#/$defs/uuid",
+                "description": "Engagement id."
+              },
+              "firmId": {
+                "$ref": "envelope.schema.json#/$defs/uuid",
+                "description": "Firm id."
+              }
+            },
+            "required": [
+              "engagementId",
+              "firmId"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "jobId",
+        "chunkNo",
+        "lastChunk",
+        "refs"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000033",
+      "eventType": "EnqueueFanOutTasks",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000033",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "chunkNo": 0,
+        "lastChunk": true,
+        "refs": [
+          {
+            "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "firmId": "22222222-2222-4222-8222-222222222222"
+          }
+        ]
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "EngagementVersionInspected.v1 (one per task)"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "PK": "FQ#PUBLISH",
+  "SK": "FIRM#22222222-2222-4222-8222-222222222222",
+  "entityType": "FanOutFirmQueue",
+  "priority": "PUBLISH",
+  "firmId": "22222222-2222-4222-8222-222222222222",
+  "readyCount": 48,
+  "deficit": 2,
+  "version": 17,
+  "createdBy": "00000000-0000-4000-8000-000000000001",
+  "createdAt": "2026-10-22T10:00:00Z",
+  "updatedBy": "00000000-0000-4000-8000-000000000001",
+  "updatedAt": "2026-10-22T10:00:05Z",
+  "state": "ACTIVE"
+}

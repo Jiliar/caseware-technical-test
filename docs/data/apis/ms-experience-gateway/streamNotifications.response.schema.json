@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-experience-gateway/streamNotifications.response.schema.json",
+  "title": "streamNotifications response",
+  "description": "GET /v1/notifications/stream - responses per status code. Server-Sent Events stream of firm notifications ('there are changes, fetch again'); resumable with Last-Event-ID.",
+  "$comment": "Source: DISENO S7 (b) Connection, (c) connections, (d) RegisterConnectionUseCase / DeliverNotificationUseCase / PushChannel, (e) SSE text/event-stream resumable with Last-Event-ID, (g) coalescing T_coal, (h) push down -> polling every T_poll; DESIGN_DOC push row; PRD RF-032; ADR-009/DEC-13. Audience: PUBLIC (served to the UI). Residency: REGIONAL (cell of the firm, resolved by the stateless global edge firmId -> cell, RF-093); the firm comes from the authenticated context, never from the URL; SSE connections are served by S7 tasks of the cell (Connection item with TTL). Idempotency: safe read (GET); reconnection with Last-Event-ID does not duplicate (notification id = eventId). Pagination: n/a (stream; resume with Last-Event-ID).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Stream opened; each body item is one SSE frame.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Stream opened; each body item is one SSE frame."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeEventStream"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "One SSE frame (WHATWG HTML server-sent events). The stream is a sequence of such frames over a long-lived HTTP response; it is not a collection.",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "SSE 'id' field = NotificationItem.id; the client sends it back as Last-Event-ID on reconnection.",
+              "minLength": 1
+            },
+            "event": {
+              "type": "string",
+              "description": "SSE 'event' field = NotificationItem.kind.",
+              "minLength": 1
+            },
+            "data": {
+              "$ref": "../_shared/NotificationItem.schema.json",
+              "description": "SSE 'data' field: the NotificationItem serialized as one JSON line."
+            }
+          },
+          "required": [
+            "id",
+            "event",
+            "data"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "text/event-stream"
+      },
+      "body": {
+        "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+        "event": "PENDING_UPDATES_CHANGED",
+        "data": {
+          "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+          "firmId": "22222222-2222-4222-8222-222222222222",
+          "kind": "PENDING_UPDATES_CHANGED",
+          "refs": {
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "publishId": "66666666-6666-4666-8666-666666666666"
+          },
+          "createdAt": "2026-10-22T10:00:06Z"
+        }
+      }
+    }
+  ]
+}

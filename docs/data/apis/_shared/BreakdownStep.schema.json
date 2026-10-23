@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/BreakdownStep.schema.json",
+  "title": "BreakdownStep",
+  "description": "One step of the per-intermediate-version breakdown of a cumulative offer (RF-050): the summary of one consecutive pair of [currentVersion, intermediateVersions..., offerTarget] (DISENO 3.8.6).",
+  "$comment": "Source: DISENO 3.8.6 (BreakdownStep), S7 (e) GET /v1/engagements/{id}/pending-update/breakdown, DEC-34; PRD RF-050. Audience: public (S7). Residency: global non-confidential summary content cached in the cell.",
+  "type": "object",
+  "properties": {
+    "fromVersion": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Base version of the step (version label)."
+    },
+    "toVersion": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target version of the step (version label)."
+    },
+    "summaryStatus": {
+      "type": "string",
+      "enum": [
+        "AVAILABLE",
+        "CACHED",
+        "PENDING",
+        "UNAVAILABLE"
+      ],
+      "description": "As in PendingUpdateView, plus PENDING while the step summary is generated (S7 then sends GenerateChangeSummary.v1)."
+    },
+    "record": {
+      "oneOf": [
+        {
+          "$ref": "SummaryRecord.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Summary of the step; null unless AVAILABLE or CACHED."
+    }
+  },
+  "required": [
+    "fromVersion",
+    "toVersion",
+    "summaryStatus",
+    "record"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "fromVersion": "v3",
+      "toVersion": "v4",
+      "summaryStatus": "PENDING",
+      "record": null
+    }
+  ]
+}

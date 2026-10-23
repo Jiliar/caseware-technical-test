@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-engagement-index/getPublishProgress.response.schema.json",
+  "title": "getPublishProgress response",
+  "description": "GET /v1/publishes/{publishId}/progress - responses per status code. Projection progress of a publish in this cell (completeness per unit).",
+  "$comment": "Source: DISENO S3 (e), AP-I7, publish_progress; EV-23 PublishProjectionCompleted.v1; PRD RF-022, RF-084. Audience: OPERATOR (projection part of RF-022; the fan-out part is ms-publish-fanout GET /v1/jobs/{jobId}, DEC-33). Residency: REGIONAL (cell); OPERATIONAL data, no engagement ids. Idempotency: safe read (GET). Pagination: none (bounded by source versions x N_shards).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        404,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Progress.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Progress."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "properties": {
+            "publishId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Publish id."
+            },
+            "state": {
+              "type": "string",
+              "enum": [
+                "IN_PROGRESS",
+                "COMPLETED"
+              ],
+              "description": "COMPLETED when every unit is COMPLETED."
+            },
+            "expectedUnits": {
+              "type": "integer",
+              "description": "Number of units (source version x shard), as in EV-23.",
+              "minimum": 0
+            },
+            "completedUnits": {
+              "type": "integer",
+              "description": "Completed units, as in EV-23.",
+              "minimum": 0
+            },
+            "expected": {
+              "type": "integer",
+              "description": "Sum of expected items.",
+              "minimum": 0
+            },
+            "processed": {
+              "type": "integer",
+              "description": "Sum of processed items.",
+              "minimum": 0
+            },
+            "units": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "sourceVersion": {
+                    "type": "string",
+                    "description": "Eligible source version label of the unit.",
+                    "minLength": 1
+                  },
+                  "shard": {
+                    "type": "integer",
+                    "description": "Logical shard (0..N_shards-1).",
+                    "minimum": 0
+                  },
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "IN_PROGRESS",
+                      "COMPLETED"
+                    ],
+                    "description": "Unit state (publish_progress.state)."
+                  },
+                  "expected": {
+                    "type": "integer",
+                    "description": "Expected items.",
+                    "minimum": 0
+                  },
+                  "processed": {
+                    "type": "integer",
+                    "description": "Processed items.",
+                    "minimum": 0
+                  },
+                  "updatedAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Last update."
+                  }
+                },
+                "required": [
+                  "sourceVersion",
+                  "shard",
+                  "state",
+                  "expected",
+                  "processed",
+                  "updatedAt"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Per-unit progress. Bounded by eligible source versions x N_shards (not by engagements)."
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Max updatedAt of the units (freshness <= D_stale, RF-022)."
+            }
+          },
+          "required": [
+            "publishId",
+            "state",
+            "expectedUnits",
+            "completedUnits",
+            "expected",
+            "processed",
+            "units",
+            "updatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "state": "IN_PROGRESS",
+        "expectedUnits": 2,
+        "completedUnits": 1,
+        "expected": 20000,
+        "processed": 13250,
+        "units": [
+          {
+            "sourceVersion": "v5",
+            "shard": 0,
+            "state": "COMPLETED",
+            "expected": 10000,
+            "processed": 10000,
+            "updatedAt": "2026-10-22T10:00:04Z"
+          },
+          {
+            "sourceVersion": "v5",
+            "shard": 1,
+            "state": "IN_PROGRESS",
+            "expected": 10000,
+            "processed": 3250,
+            "updatedAt": "2026-10-22T10:00:05Z"
+          }
+        ],
+        "updatedAt": "2026-10-22T10:00:05Z"
+      }
+    }
+  ]
+}

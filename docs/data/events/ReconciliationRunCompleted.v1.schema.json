@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/ReconciliationRunCompleted.v1.schema.json",
+  "title": "ReconciliationRunCompleted.v1",
+  "description": "A reconciliation run finished; stored by ms-audit-ledger as control evidence.",
+  "$comment": "Source: DISENO 4.3 catalog EV-27; RF-083, RF-088; SLO-02. Producer: ms-backfill-reconciler. Consumers: ms-audit-ledger. Channel: SNS ms-backfill-reconciler -> SQS ms-audit-ledger. Ordering/partition key: runId. Idempotency key: runId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.3). Stays inside its cell; operational metadata only (ids, counters, hashes).",
+  "x-catalogId": "EV-27",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger"
+  ],
+  "x-channel": "SNS ms-backfill-reconciler -> SQS ms-audit-ledger",
+  "x-snsTopic": "{cell}-ms-backfill-reconciler-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-backfill-reconciler"
+  ],
+  "x-orderingKey": "runId",
+  "x-idempotencyKey": "runId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "ReconciliationRunCompleted"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-backfill-reconciler"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Reconciliation run id."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "EXPORT",
+            "SAMPLE",
+            "TARGETED"
+          ],
+          "description": "Run kind (same values as reconciliation_run.kind)."
+        },
+        "checked": {
+          "type": "integer",
+          "description": "Engagements checked.",
+          "minimum": 0
+        },
+        "discrepancies": {
+          "type": "integer",
+          "description": "Discrepancies found.",
+          "minimum": 0
+        },
+        "repaired": {
+          "type": "integer",
+          "description": "Discrepancies repaired.",
+          "minimum": 0
+        },
+        "accuracyEstimate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of checked engagements without discrepancy: 1 - discrepancies / checked (SLO-02 SLI)."
+        },
+        "finishedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Run end instant."
+        }
+      },
+      "required": [
+        "runId",
+        "kind",
+        "checked",
+        "discrepancies",
+        "repaired",
+        "accuracyEstimate",
+        "finishedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000027",
+      "eventType": "ReconciliationRunCompleted",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-backfill-reconciler",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000027",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "runId": "88888888-8888-4888-8888-888888888888",
+        "kind": "SAMPLE",
+        "checked": 1000,
+        "discrepancies": 2,
+        "repaired": 2,
+        "accuracyEstimate": 0.998,
+        "finishedAt": "2026-10-22T04:00:00Z"
+      }
+    }
+  ]
+}

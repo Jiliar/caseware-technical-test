@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/engagements-system/listCatalogEngagements.response.schema.json",
+  "title": "listCatalogEngagements response",
+  "description": "listCatalogEngagements - responses per status code. Paginated enumeration of a firm's engagements from the Engagements System catalog (declared assumption SUP-08: if it does not exist, SX-04 disappears).",
+  "$comment": "Source: DISENO S5 (b) CatalogCursor, (d) EngagementCatalogPort (ACL), (e) paginated catalog read; DISENO 4.8 SX-04; ADR-020 SX-04 + SUP-08 (catalog lists id, firm, template, version without loading engagements). Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-04 (S5 -> external catalog). Residency: REGIONAL (cell). Idempotency: safe read. Pagination: CatalogCursor (opaque, owned by the external system). CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: pause the saga. Rate limit agreed with the owning team.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Success as expected by the client.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Success as expected by the client."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Catalog page.",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "engagementId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Engagement id."
+                  },
+                  "firmId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Firm id."
+                  },
+                  "templateId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "Template id, if known."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Version label, if known."
+                  }
+                },
+                "required": [
+                  "engagementId",
+                  "firmId",
+                  "templateId",
+                  "version"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Catalog page (mapped to EngagementDiscovered.v1 items, <= L_lote per message)."
+            },
+            "nextCursor": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Next CatalogCursor; null at the end."
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused.",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it.",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "77777777-7777-4777-8777-777777777777"
+      },
+      "body": {
+        "items": [
+          {
+            "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "firmId": "22222222-2222-4222-8222-222222222222",
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "version": "v5"
+          }
+        ],
+        "nextCursor": "c-000121"
+      }
+    }
+  ]
+}

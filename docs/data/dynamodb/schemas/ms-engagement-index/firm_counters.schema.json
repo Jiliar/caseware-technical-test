@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/firm_counters.schema.json",
+  "title": "firm_counters item (FirmCounterShard)",
+  "description": "Sharded counters per firm and template (ADR-012). DISENO S3 (c).",
+  "$comment": "Table firm_counters (per cell). PK = CNT#<firmId>#<templateId>, SK = S<0..N_cnt-1>. AP-I5: Query PK (N_cnt items) and sum; error <= P_div (RF-031). Counters are updated with atomic ADD; a single shard may go transiently negative, so no minimum is set. No TTL (derived data).",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"CNT#<firmId>#<templateId>\".",
+      "pattern": "^CNT#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"S<n>\", n in 0..N_cnt-1.",
+      "pattern": "^S[0-9]+$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "FirmCounterShard",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "templateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Template id."
+    },
+    "pending": {
+      "type": "integer",
+      "description": "Pending offers (shard part)."
+    },
+    "declined": {
+      "type": "integer",
+      "description": "Declined (shard part)."
+    },
+    "unclassified": {
+      "type": "integer",
+      "description": "Unclassified engagements (shard part)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE"
+      ],
+      "description": "Constant ACTIVE (no lifecycle). Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "firmId",
+    "templateId",
+    "pending",
+    "declined",
+    "unclassified",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

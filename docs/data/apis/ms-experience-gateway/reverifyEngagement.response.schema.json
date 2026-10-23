@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-experience-gateway/reverifyEngagement.response.schema.json",
+  "title": "reverifyEngagement response",
+  "description": "POST /v1/engagements/{engagementId}:reverify - responses per status code. Requests an interactive re-verification of one engagement through the fan-out worker (downstream ~1 min). Asynchronous: the result arrives as EngagementVersionInspected.v1 -> projection update -> notification.",
+  "$comment": "Source: DISENO S7 (d) FanOutCommandSender, (e) 'POST /v1/engagements/{id}:reverify (enqueues INTERACTIVE priority)', (f) StartFanOutJob.v1 / EnqueueFanOutTasks.v1; DISENO 4.4 CMD-03, CMD-04; S4 (b) PriorityClass; PRD RF-021. Audience: PUBLIC (served to the UI). Residency: REGIONAL (cell of the firm, resolved by the stateless global edge firmId -> cell, RF-093); the firm comes from the authenticated context, never from the URL; the command stays in the cell (CMD-03/CMD-04 to ms-publish-fanout of the same cell). Idempotency: Idempotency-Key required: jobId = UUID v5 of the key, so a repeated request returns the same job (DEC-35). Pagination: n/a.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        202,
+        400,
+        404,
+        409,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status202"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status409"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status202": {
+      "type": "object",
+      "description": "202: Accepted: command enqueued.",
+      "properties": {
+        "status": {
+          "const": 202,
+          "description": "Accepted: command enqueued."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Acknowledgement.",
+          "properties": {
+            "jobId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Fan-out job id of the StartFanOutJob.v1 command."
+            },
+            "engagementId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Engagement id."
+            },
+            "priority": {
+              "type": "string",
+              "const": "INTERACTIVE",
+              "description": "PriorityClass of the enqueued job."
+            }
+          },
+          "required": [
+            "jobId",
+            "engagementId",
+            "priority"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status409": {
+      "type": "object",
+      "description": "409: Idempotency-Key reused with another request (idempotency-key-reuse).",
+      "properties": {
+        "status": {
+          "const": 409,
+          "description": "Idempotency-Key reused with another request (idempotency-key-reuse)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 409
+                },
+                "type": {
+                  "enum": [
+                    "idempotency-key-reuse"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable).",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Dependency unavailable: honest fallback, never invented state; carries retry-after (problem type dependency-unavailable)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            },
+            "retry-after": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/retryAfter"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type",
+            "retry-after"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 503
+                },
+                "type": {
+                  "enum": [
+                    "dependency-unavailable"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 202,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "priority": "INTERACTIVE"
+      }
+    }
+  ]
+}

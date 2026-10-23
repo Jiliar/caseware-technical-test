@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-experience-gateway/listNotifications.response.schema.json",
+  "title": "listNotifications response",
+  "description": "GET /v1/notifications - responses per status code. Paginated notification inbox of the caller's firm (polling fallback of the SSE stream).",
+  "$comment": "Source: DISENO S7 (c) notifications AP-G2 (paginated inbox), (e) 'GET /v1/notifications?cursor', (h) polling fallback every T_poll; PRD RF-032, RF-120. Audience: PUBLIC (served to the UI). Residency: REGIONAL (cell of the firm, resolved by the stateless global edge firmId -> cell, RF-093); the firm comes from the authenticated context, never from the URL. Idempotency: safe read (GET). Pagination: cursor + limit <= N_pagemax (DISENO 3.8.5).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Page of notifications.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Page of notifications."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Page envelope (_shared/pagination.schema.json).",
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "../_shared/NotificationItem.schema.json"
+              },
+              "description": "Notifications, newest first (SK = createdAt#id) (order derived)."
+            },
+            "nextCursor": {
+              "$ref": "../_shared/pagination.schema.json#/$defs/nextCursor"
+            }
+          },
+          "required": [
+            "items",
+            "nextCursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "items": [
+          {
+            "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+            "firmId": "22222222-2222-4222-8222-222222222222",
+            "kind": "PENDING_UPDATES_CHANGED",
+            "refs": {
+              "templateId": "33333333-3333-4333-8333-333333333333",
+              "publishId": "66666666-6666-4666-8666-666666666666"
+            },
+            "createdAt": "2026-10-22T10:00:06Z"
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

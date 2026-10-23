@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/EngagementListItem.schema.json",
+  "title": "EngagementListItem",
+  "description": "One row of the per-firm engagement listing: at-a-glance indicator without opening the engagement (RF-030).",
+  "$comment": "Source: DISENO 3.8.6 (view model EngagementListItem), S3 (e), S7 (e); engagement_state attributes; PRD RF-030, RF-033, RF-015. Internal attributes (PK/GSI keys, lastSeq, lastHookAt, version, audit) are never exposed. Audience: internal (S3, SX-01a) and public (S7). Residency: regional (cell of the firm).",
+  "type": "object",
+  "properties": {
+    "engagementId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Engagement id."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id (tenant)."
+    },
+    "templateId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uuid",
+      "description": "Template id; null while UNCLASSIFIED and unknown."
+    },
+    "branch": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Market branch; null while UNCLASSIFIED."
+    },
+    "currentVersion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Real base version label; null while UNCLASSIFIED."
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "UNCLASSIFIED",
+        "CLASSIFIED"
+      ],
+      "description": "Classification (engagement_state.state without ARCHIVED; archived engagements are not listed, RF-010 'active' scope). UNCLASSIFIED must be rendered as 'verifying' (RF-015)."
+    },
+    "offer": {
+      "oneOf": [
+        {
+          "$ref": "Offer.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Current offer, null when there is none."
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "APPLIED_WITHDRAWN"
+        ]
+      },
+      "description": "Flags (DISENO S3 (b); RF-073).",
+      "uniqueItems": true
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last update of the projection item (freshness, RF-037)."
+    }
+  },
+  "required": [
+    "engagementId",
+    "firmId",
+    "templateId",
+    "branch",
+    "currentVersion",
+    "classification",
+    "offer",
+    "flags",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "engagementId": "11111111-1111-4111-8111-111111111111",
+      "firmId": "22222222-2222-4222-8222-222222222222",
+      "templateId": "33333333-3333-4333-8333-333333333333",
+      "branch": "main",
+      "currentVersion": "v3",
+      "classification": "CLASSIFIED",
+      "offer": {
+        "target": "v7",
+        "since": "2026-10-22T10:00:05Z",
+        "status": "PENDING",
+        "previouslyDeclined": [
+          "v5"
+        ]
+      },
+      "flags": [],
+      "updatedAt": "2026-10-22T10:00:05Z"
+    }
+  ]
+}

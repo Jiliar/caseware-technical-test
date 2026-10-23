@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/AuditBatchSealed.v1.schema.json",
+  "title": "AuditBatchSealed.v1",
+  "description": "The daily batch of audit entries of a cell was sealed (Merkle root) in S3 Object Lock. Batch metadata only.",
+  "$comment": "Source: DISENO 4.3 catalog EV-29; RNF-024, RNF-025. Producer: ms-audit-ledger. Consumers: none internal (kept in the cell bus archive for Compliance). Channel: ms-audit-ledger outbox -> cell EventBridge bus (archived with TTL_arch; no internal consumer, DEC-22). Ordering/partition key: day. Idempotency key: day + cellId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.3). Stays inside its cell; operational metadata only (ids, counters, hashes).",
+  "x-catalogId": "EV-29",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-audit-ledger"
+  ],
+  "x-consumers": [],
+  "x-channel": "ms-audit-ledger outbox -> cell EventBridge bus (archived with TTL_arch; no internal consumer, DEC-22)",
+  "x-snsTopic": null,
+  "x-sqsQueues": [],
+  "x-orderingKey": "day",
+  "x-idempotencyKey": "day + cellId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "AuditBatchSealed"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-audit-ledger"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string",
+          "format": "date",
+          "description": "Sealed day (sealed_batch.day)."
+        },
+        "cellId": {
+          "type": "string",
+          "description": "Cell of the ledger (repeats the envelope cellId, as listed in the catalog payload)."
+        },
+        "entryCount": {
+          "type": "integer",
+          "description": "Entries in the batch.",
+          "minimum": 0
+        },
+        "merkleRoot": {
+          "type": "string",
+          "description": "Merkle root of the batch."
+        },
+        "s3Key": {
+          "type": "string",
+          "description": "S3 key of the sealed object."
+        },
+        "s3VersionId": {
+          "type": "string",
+          "description": "S3 object version id (issued by AWS)."
+        }
+      },
+      "required": [
+        "day",
+        "cellId",
+        "entryCount",
+        "merkleRoot",
+        "s3Key",
+        "s3VersionId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000029",
+      "eventType": "AuditBatchSealed",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-audit-ledger",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000029",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "day": "2026-10-22",
+        "cellId": "eu",
+        "entryCount": 48211,
+        "merkleRoot": "7d1e0c9b8a7f6e5d4c3b2a1f0e9d8c7b6a5f4e3d2c1b0a9f8e7d6c5b4a3f2e1d",
+        "s3Key": "ledger/2026/10/22/batch.json",
+        "s3VersionId": "example-version-id-0001"
+      }
+    }
+  ]
+}

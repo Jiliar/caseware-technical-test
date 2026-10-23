@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/FanOutTaskDeadLettered.v1.schema.json",
+  "title": "FanOutTaskDeadLettered.v1",
+  "description": "A fan-out task exhausted N_reint attempts (FanOutTask state DEAD). Emitted by the Streams relay on fanout_task.",
+  "$comment": "Source: DISENO 4.3 catalog EV-25; RF-107; US-03.3.2. Producer: ms-publish-fanout. Consumers: ms-backfill-reconciler. Channel: SNS ms-publish-fanout -> SQS ms-backfill-reconciler. Ordering/partition key: jobId. Idempotency key: jobId + engagementId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-25",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-publish-fanout"
+  ],
+  "x-consumers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-channel": "SNS ms-publish-fanout -> SQS ms-backfill-reconciler",
+  "x-snsTopic": "{cell}-ms-publish-fanout-events",
+  "x-sqsQueues": [
+    "{cell}-ms-backfill-reconciler-ms-publish-fanout"
+  ],
+  "x-orderingKey": "jobId",
+  "x-idempotencyKey": "jobId + engagementId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "FanOutTaskDeadLettered"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-publish-fanout"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id."
+        },
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "priority": {
+          "$ref": "envelope.schema.json#/$defs/priorityClass",
+          "description": "Priority class of the task."
+        },
+        "attempts": {
+          "type": "integer",
+          "description": "Attempts performed (FanOutTask.attempts).",
+          "minimum": 0
+        },
+        "reasonCode": {
+          "type": "string",
+          "enum": [
+            "RETRIES_EXHAUSTED",
+            "NON_RETRYABLE"
+          ],
+          "description": "FanOutTask.failureReason (Part 2 FailureReason): retries exhausted or non-retryable error."
+        }
+      },
+      "required": [
+        "jobId",
+        "engagementId",
+        "firmId",
+        "priority",
+        "attempts",
+        "reasonCode"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000025",
+      "eventType": "FanOutTaskDeadLettered",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-publish-fanout",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000025",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "priority": "BACKFILL",
+        "attempts": 5,
+        "reasonCode": "RETRIES_EXHAUSTED"
+      }
+    }
+  ]
+}

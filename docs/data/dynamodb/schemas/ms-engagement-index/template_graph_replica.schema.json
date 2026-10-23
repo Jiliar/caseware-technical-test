@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/template_graph_replica.schema.json",
+  "title": "template_graph_replica items (TemplateGraphNode | TemplateGraphMeta)",
+  "description": "Any item of table template_graph_replica; discriminator attribute 'entityType'.",
+  "$comment": "Table template_graph_replica (per cell): local replica of the version DAG fed by EV-03/EV-04 (ADR-018, DEC-04). Item types: TemplateGraphNode (PK = TPL#<templateId>, SK = V#<templateVersion>) and TemplateGraphMeta (PK = TPL#<templateId>, SK = META). AP-I6: TransactWriteItems(node + META.appliedSeq) with condition appliedSeq = seq - 1. No TTL (graph is permanent; WITHDRAWN is never deleted, DISENO 4.6). No GSI.",
+  "type": "object",
+  "properties": {
+    "entityType": {
+      "type": "string",
+      "enum": [
+        "TemplateGraphNode",
+        "TemplateGraphMeta"
+      ]
+    }
+  },
+  "required": [
+    "entityType"
+  ],
+  "oneOf": [
+    {
+      "$ref": "template_graph_replica.TemplateGraphNode.schema.json"
+    },
+    {
+      "$ref": "template_graph_replica.TemplateGraphMeta.schema.json"
+    }
+  ]
+}

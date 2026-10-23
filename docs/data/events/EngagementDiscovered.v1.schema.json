@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/EngagementDiscovered.v1.schema.json",
+  "title": "EngagementDiscovered.v1",
+  "description": "Batch (at most L_lote items) of existing engagements discovered by the backfill campaign or asserted by reconciliation. Stays in the cell.",
+  "$comment": "Source: DISENO 4.3 catalog EV-13; RF-014, RF-083; US-02.2.1. Producer: ms-backfill-reconciler. Consumers: ms-engagement-index. Channel: SNS ms-backfill-reconciler -> SQS ms-engagement-index. Ordering/partition key: engagementId. Idempotency key: discoveryBatchId + engagementId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-13",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-backfill-reconciler"
+  ],
+  "x-consumers": [
+    "ms-engagement-index"
+  ],
+  "x-channel": "SNS ms-backfill-reconciler -> SQS ms-engagement-index",
+  "x-snsTopic": "{cell}-ms-backfill-reconciler-events",
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-ms-backfill-reconciler"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "discoveryBatchId + engagementId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "EngagementDiscovered"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-backfill-reconciler"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "discoveryBatchId": {
+          "type": "string",
+          "description": "Deterministic batch id '{campaignId|runId}:{firmId}:{cursor}' (DEC-26); re-emitting a batch is idempotent in ms-engagement-index."
+        },
+        "campaignId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Backfill campaign that discovered the batch; exactly one of campaignId or runId is present (DEC-26)."
+        },
+        "runId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Reconciliation run that discovered the batch (EXPORT or TARGETED runs); exactly one of campaignId or runId is present (DEC-26)."
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "CATALOG",
+            "EXPORT"
+          ],
+          "description": "Discovery source."
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Discovered engagements; size bounded by the named parameter L_lote (no value in the documents). minItems 1: an empty batch is never emitted.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "engagementId": {
+                "$ref": "envelope.schema.json#/$defs/uuid",
+                "description": "Engagement id."
+              },
+              "firmId": {
+                "$ref": "envelope.schema.json#/$defs/uuid",
+                "description": "Firm id."
+              },
+              "templateId": {
+                "$ref": "envelope.schema.json#/$defs/uuid",
+                "description": "Template id, if known."
+              },
+              "assertedVersion": {
+                "$ref": "envelope.schema.json#/$defs/versionLabel",
+                "description": "Version asserted by the source, if known."
+              },
+              "assertedAt": {
+                "$ref": "envelope.schema.json#/$defs/instant",
+                "description": "Instant the source asserted the version, if known."
+              }
+            },
+            "required": [
+              "engagementId",
+              "firmId"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "discoveryBatchId",
+        "source",
+        "items"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "campaignId"
+          ]
+        },
+        {
+          "required": [
+            "runId"
+          ]
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000013",
+      "eventType": "EngagementDiscovered",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-backfill-reconciler",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000013",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "discoveryBatchId": "77777777-7777-4777-8777-777777777777:22222222-2222-4222-8222-222222222222:c-000120",
+        "campaignId": "77777777-7777-4777-8777-777777777777",
+        "source": "CATALOG",
+        "items": [
+          {
+            "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            "firmId": "22222222-2222-4222-8222-222222222222",
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "assertedVersion": "v5",
+            "assertedAt": "2026-10-20T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ]
+}

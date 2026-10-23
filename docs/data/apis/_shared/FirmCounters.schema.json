@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/FirmCounters.schema.json",
+  "title": "FirmCounters",
+  "description": "Aggregated counters per firm and per product: pending, declined, verifying (RF-031). Approximate: error <= P_div (sharded counters, ADR-012).",
+  "$comment": "Source: DISENO 3.8.6 (view model FirmCounters), S3 (d) FirmCountersQuery, (e), AP-I5, firm_counters; S7 (e) GET /v1/counters; PRD RF-031. Audience: internal (S3) and public (S7). Residency: regional.",
+  "type": "object",
+  "properties": {
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "totals": {
+      "type": "object",
+      "description": "Firm totals (sum over templates).",
+      "properties": {
+        "pending": {
+          "type": "integer",
+          "description": "Pending offers.",
+          "minimum": 0
+        },
+        "declined": {
+          "type": "integer",
+          "description": "Declined.",
+          "minimum": 0
+        },
+        "unclassified": {
+          "type": "integer",
+          "description": "Unclassified engagements ('verifying').",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "pending",
+        "declined",
+        "unclassified"
+      ],
+      "additionalProperties": false
+    },
+    "byTemplate": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template (product) id."
+          },
+          "pending": {
+            "type": "integer",
+            "description": "Pending offers.",
+            "minimum": 0
+          },
+          "declined": {
+            "type": "integer",
+            "description": "Declined.",
+            "minimum": 0
+          },
+          "unclassified": {
+            "type": "integer",
+            "description": "Unclassified engagements ('verifying').",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "templateId",
+          "pending",
+          "declined",
+          "unclassified"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Counters per template/product (RF-031). Bounded by the number of products (templates), not by engagements."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Freshness of the counters (max updatedAt of the shards read, RF-037)."
+    }
+  },
+  "required": [
+    "firmId",
+    "totals",
+    "byTemplate",
+    "updatedAt"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "firmId": "22222222-2222-4222-8222-222222222222",
+      "totals": {
+        "pending": 1840,
+        "declined": 12,
+        "unclassified": 310
+      },
+      "byTemplate": [
+        {
+          "templateId": "33333333-3333-4333-8333-333333333333",
+          "pending": 1840,
+          "declined": 12,
+          "unclassified": 310
+        }
+      ],
+      "updatedAt": "2026-10-22T10:00:07Z"
+    }
+  ]
+}

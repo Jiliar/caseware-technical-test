@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/pagination.schema.json",
+  "title": "Cursor pagination",
+  "description": "Cursor-based page envelope shared by every collection response: 'items' plus 'nextCursor' (null on the last page). Requests use 'cursor' (opaque, from the previous page) and 'limit' (page size). There are no unbounded collections: every list is paged or naturally bounded.",
+  "$comment": "Source: DISENO 3.8.5 (cursor + limit <= N_pagemax on every collection without a natural bound); PRD RF-033, RF-034 (stable order, merge per shard), RF-120, RNF-042, RNF-003. Audience: all. Residency: a cursor issued by a cell is only valid in that cell.",
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {},
+      "description": "Page items (typed by each response)."
+    },
+    "nextCursor": {
+      "$ref": "#/$defs/nextCursor"
+    }
+  },
+  "required": [
+    "items",
+    "nextCursor"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "cursor": {
+      "type": "string",
+      "description": "Opaque cursor returned as nextCursor by the previous page; clients must not parse it (S3: encodes the position per shard, RF-034).",
+      "minLength": 1
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Requested page size: 1 .. N_pagemax (named parameter, DISENO 0.2 and 3.8.5); a larger value gets 400 invalid-request.",
+      "minimum": 1
+    },
+    "nextCursor": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "description": "Cursor of the next page; null when there are no more items."
+    }
+  },
+  "examples": [
+    {
+      "items": [
+        {
+          "engagementId": "11111111-1111-4111-8111-111111111111"
+        }
+      ],
+      "nextCursor": "eyJzIjpbIjEyIiwiMDQiXX0"
+    }
+  ]
+}

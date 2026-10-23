@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-publish-fanout/fanout_firm_queue.schema.json",
+  "title": "fanout_firm_queue item (FanOutFirmQueue)",
+  "description": "Firms with ready work per priority, for deficit round-robin (FW-013). DISENO S4 (c).",
+  "$comment": "Table fanout_firm_queue (per cell). PK = FQ#<priority>, SK = FIRM#<firmId>. AP-F2: Query FQ#<priority> and weighted deficit round-robin. No TTL documented.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"FQ#<priority>\".",
+      "pattern": "^FQ#(INTERACTIVE|PUBLISH|BACKFILL|RECONCILIATION)$"
+    },
+    "SK": {
+      "type": "string",
+      "description": "Sort key. SK = \"FIRM#<firmId>\".",
+      "pattern": "^FIRM#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "FanOutFirmQueue",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "INTERACTIVE",
+        "PUBLISH",
+        "BACKFILL",
+        "RECONCILIATION"
+      ],
+      "description": "PriorityClass (DISENO S4 (b))."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "readyCount": {
+      "type": "integer",
+      "description": "Ready tasks of the firm in this priority."
+    },
+    "deficit": {
+      "type": "number",
+      "description": "Deficit counter of the weighted round-robin."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE"
+      ],
+      "description": "Constant ACTIVE; the item is deleted when readyCount = 0. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "SK",
+    "entityType",
+    "priority",
+    "firmId",
+    "readyCount",
+    "deficit",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

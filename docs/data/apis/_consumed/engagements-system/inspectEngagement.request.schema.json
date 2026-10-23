@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/engagements-system/inspectEngagement.request.schema.json",
+  "title": "inspectEngagement request",
+  "description": "inspectEngagement - request. ~1 min per-engagement downstream operation of the Engagements System, called by ms-publish-fanout under Bulkhead(C_max per cell) -> RateLimiter -> TimeLimiter(T_call) -> CircuitBreaker -> Retry(N_reint).",
+  "$comment": "Source: DISENO S4 (a) 'inspect/classify' operation, (d) DownstreamEngagementClient, (g) idempotencyKey = jobId:engagementId:targetVersion (DEC-30), (h), (k) result (templateId, version); DISENO 4.8 SX-03; ADR-020 SX-03 + assumption on idempotency; ADR-010; E-51, E-34; SUP-08, OQ-05. Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-03 (S4 -> external downstream). Residency: REGIONAL (cell); only EngagementRef goes out and only (templateId, version) comes back (DISENO S4 (k)). Idempotency: expected idempotent per idempotencyKey (assumption SUP-08 b / OQ-05; if not, no automatic retry after timeout, ADR-020). Pagination: n/a. CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: task -> RetryScheduled, logical DLQ.",
+  "type": "object",
+  "properties": {
+    "headers": {
+      "type": "object",
+      "description": "Headers the client propagates when the transport allows it.",
+      "properties": {
+        "correlation-id": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+        },
+        "traceparent": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/traceparent"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "body": {
+      "type": "object",
+      "description": "JSON request body.",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "const": "INSPECT",
+          "description": "Operation (CMD-03 operation {INSPECT})."
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "description": "jobId:engagementId:targetVersion (DISENO S4 (g), DEC-30; targetVersion = NONE in jobs without target); declared assumption: honoured by the downstream (SUP-08 b, OQ-05).",
+          "pattern": "^[0-9a-f-]{36}:[0-9a-f-]{36}:[^:]+$"
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Engagement id (EngagementRef)."
+        },
+        "firmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Firm id (EngagementRef)."
+        }
+      },
+      "required": [
+        "operation",
+        "idempotencyKey",
+        "engagementId",
+        "firmId"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "headers",
+    "body"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "headers": {
+        "correlation-id": "66666666-6666-4666-8666-666666666666"
+      },
+      "body": {
+        "operation": "INSPECT",
+        "idempotencyKey": "66666666-6666-4666-8666-666666666666:11111111-1111-4111-8111-111111111111:v7",
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222"
+      }
+    }
+  ]
+}

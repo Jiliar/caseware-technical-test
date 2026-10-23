@@ -1,0 +1,16 @@
+{
+  "PK": "PUB#66666666-6666-4666-8666-666666666666",
+  "SK": "UNIT#v3#S7",
+  "entityType": "PublishProgressUnit",
+  "publishId": "66666666-6666-4666-8666-666666666666",
+  "sourceVersion": "v3",
+  "expected": 500,
+  "processed": 500,
+  "ttl": 1798000000,
+  "version": 3,
+  "createdBy": "00000000-0000-4000-8000-000000000001",
+  "createdAt": "2026-10-22T10:00:00Z",
+  "updatedBy": "00000000-0000-4000-8000-000000000001",
+  "updatedAt": "2026-10-22T10:00:05Z",
+  "state": "COMPLETED"
+}

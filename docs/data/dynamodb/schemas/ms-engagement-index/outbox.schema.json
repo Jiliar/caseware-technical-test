@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/outbox.schema.json",
+  "title": "outbox item (OutboxEvent) of ms-engagement-index",
+  "description": "Events that are not an item transition (FirmPendingUpdatesChanged.v1, PublishProjectionCompleted.v1) are written as an item and leave through the table Stream (ADR-019, DISENO 3.3, 3.8.3, 4.7).",
+  "$comment": "Table outbox (per cell). Partition key only: PK = OUTBOX#<eventId> (DISENO 3.3, DEC-28). Relay: DynamoDB Streams (NEW_IMAGE) -> SNS {cell}-ms-engagement-index-events. TTL attribute ttl = TTL_outbox (DEC-28). The relay does not rewrite the item, so state stays PENDING.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"OUTBOX#<eventId>\" (DISENO 3.3, DEC-28).",
+      "pattern": "^OUTBOX#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "OutboxEvent",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Envelope eventId."
+    },
+    "eventType": {
+      "type": "string",
+      "enum": [
+        "FirmPendingUpdatesChanged",
+        "PublishProjectionCompleted"
+      ],
+      "description": "Envelope eventType (EV-22, EV-23)."
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "description": "Envelope schemaVersion (major, DISENO 4.2)."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Envelope occurredAt."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Event payload as defined by event-contracts (ADR-021)."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Epoch seconds; DynamoDB TTL = createdAt + TTL_outbox (DEC-28)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PENDING"
+      ],
+      "description": "Constant PENDING: the Stream publishes the item; it expires with TTL_outbox. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "entityType",
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "occurredAt",
+    "payload",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state",
+    "ttl"
+  ],
+  "additionalProperties": false
+}

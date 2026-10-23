@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/PendingUpdateWithdrawn.v1.schema.json",
+  "title": "PendingUpdateWithdrawn.v1",
+  "description": "The offer target was withdrawn; the offer is removed or retargeted to newTarget (best reachable target).",
+  "$comment": "Source: DISENO 4.3 catalog EV-19; RF-070, RF-072; US-06.2.3. Producer: ms-engagement-index. Consumers: ms-audit-ledger, ms-experience-gateway. Channel: SNS ms-engagement-index -> SQS (ms-audit-ledger, ms-experience-gateway). Ordering/partition key: engagementId. Idempotency key: eventId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-19",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger",
+    "ms-experience-gateway"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS (ms-audit-ledger, ms-experience-gateway)",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-engagement-index",
+    "{cell}-ms-experience-gateway-ms-engagement-index"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "PendingUpdateWithdrawn"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "withdrawnTarget": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Withdrawn offer target."
+        },
+        "newTarget": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "New offer target, if one is reachable."
+        },
+        "occurredAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Instant of the transition."
+        }
+      },
+      "required": [
+        "engagementId",
+        "firmId",
+        "templateId",
+        "withdrawnTarget",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000019",
+      "eventType": "PendingUpdateWithdrawn",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000019",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "withdrawnTarget": "v6",
+        "newTarget": "v5",
+        "occurredAt": "2026-10-22T11:00:10Z"
+      }
+    }
+  ]
+}

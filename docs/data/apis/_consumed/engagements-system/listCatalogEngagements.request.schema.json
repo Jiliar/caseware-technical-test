@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/engagements-system/listCatalogEngagements.request.schema.json",
+  "title": "listCatalogEngagements request",
+  "description": "listCatalogEngagements - request. Paginated enumeration of a firm's engagements from the Engagements System catalog (declared assumption SUP-08: if it does not exist, SX-04 disappears).",
+  "$comment": "Source: DISENO S5 (b) CatalogCursor, (d) EngagementCatalogPort (ACL), (e) paginated catalog read; DISENO 4.8 SX-04; ADR-020 SX-04 + SUP-08 (catalog lists id, firm, template, version without loading engagements). Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-04 (S5 -> external catalog). Residency: REGIONAL (cell). Idempotency: safe read. Pagination: CatalogCursor (opaque, owned by the external system). CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: pause the saga. Rate limit agreed with the owning team.",
+  "type": "object",
+  "properties": {
+    "headers": {
+      "type": "object",
+      "description": "Headers the client propagates when the transport allows it.",
+      "properties": {
+        "correlation-id": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+        },
+        "traceparent": {
+          "$ref": "../../_shared/common-headers.schema.json#/$defs/traceparent"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "body": {
+      "type": "object",
+      "description": "JSON request body.",
+      "properties": {
+        "firmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Firm whose engagements are enumerated (FirmProgress)."
+        },
+        "cursor": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "CatalogCursor from the previous page (firm_progress.cursor); null for the first page.",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "firmId",
+        "cursor"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "headers",
+    "body"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "headers": {
+        "correlation-id": "77777777-7777-4777-8777-777777777777"
+      },
+      "body": {
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "cursor": "c-000120"
+      }
+    }
+  ]
+}

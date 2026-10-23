@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/FanOutCompleted.v1.schema.json",
+  "title": "FanOutCompleted.v1",
+  "description": "A fan-out job finished (COMPLETED, PARTIAL or CANCELLED) with its final counters.",
+  "$comment": "Source: DISENO 4.3 catalog EV-26; RF-119, RF-022; FW-022. Producer: ms-publish-fanout. Consumers: ms-engagement-index, ms-backfill-reconciler. Channel: SNS ms-publish-fanout -> SQS (ms-engagement-index, ms-backfill-reconciler). Ordering/partition key: jobId. Idempotency key: jobId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: OPERATIONAL (DISENO 4.3). Stays inside its cell; operational metadata only (ids, counters, hashes).",
+  "x-catalogId": "EV-26",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "OPERATIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-publish-fanout"
+  ],
+  "x-consumers": [
+    "ms-engagement-index",
+    "ms-backfill-reconciler"
+  ],
+  "x-channel": "SNS ms-publish-fanout -> SQS (ms-engagement-index, ms-backfill-reconciler)",
+  "x-snsTopic": "{cell}-ms-publish-fanout-events",
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-ms-publish-fanout",
+    "{cell}-ms-backfill-reconciler-ms-publish-fanout"
+  ],
+  "x-orderingKey": "jobId",
+  "x-idempotencyKey": "jobId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "FanOutCompleted"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-publish-fanout"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "jobId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Fan-out job id."
+        },
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id, for publish jobs."
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "COMPLETED",
+            "PARTIAL",
+            "CANCELLED"
+          ],
+          "description": "Final outcome (subset of FanOutJob.state)."
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total tasks.",
+          "minimum": 0
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks DONE."
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks FAILED (in the logical DLQ)."
+        },
+        "obsolete": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks OBSOLETE (cancelled, withdrawn version or newer publication)."
+        },
+        "durationMs": {
+          "type": "integer",
+          "description": "Job duration in milliseconds.",
+          "minimum": 0
+        },
+        "circuitOpenedCount": {
+          "type": "integer",
+          "description": "Times the downstream circuit breaker opened during the job.",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "jobId",
+        "outcome",
+        "total",
+        "done",
+        "failed",
+        "obsolete",
+        "durationMs",
+        "circuitOpenedCount"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000026",
+      "eventType": "FanOutCompleted",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-publish-fanout",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000026",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "jobId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "outcome": "PARTIAL",
+        "total": 500,
+        "done": 497,
+        "failed": 3,
+        "obsolete": 0,
+        "durationMs": 3600000,
+        "circuitOpenedCount": 1
+      }
+    }
+  ]
+}

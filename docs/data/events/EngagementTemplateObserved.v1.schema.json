@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/EngagementTemplateObserved.v1.schema.json",
+  "title": "EngagementTemplateObserved.v1",
+  "description": "Hook emitted when an engagement is opened: reports its template and version, which classifies it for free (lazy discovery).",
+  "$comment": "Source: DISENO 4.3 catalog EV-11; RF-016; US-02.2.3. Producer: engagements-system. Consumers: ms-engagement-index. Channel: engagements-system outbox -> cell EventBridge bus -> rule -> SQS {cell}-ms-engagement-index-engagements-system. Ordering/partition key: engagementId. Idempotency key: eventId. Guarantee: at-least-once. Versioning: contract with the owning team (ADR-015); additive within v1. dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-11",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "engagements-system"
+  ],
+  "x-consumers": [
+    "ms-engagement-index"
+  ],
+  "x-channel": "engagements-system outbox -> cell EventBridge bus -> rule -> SQS {cell}-ms-engagement-index-engagements-system",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-engagements-system"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "EngagementTemplateObserved"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "engagements-system"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Observed version label."
+        },
+        "observedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Observation instant (compared with lastHookAt, DISENO 4.6)."
+        }
+      },
+      "required": [
+        "engagementId",
+        "firmId",
+        "templateId",
+        "version",
+        "observedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000011",
+      "eventType": "EngagementTemplateObserved",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "engagements-system",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": null,
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v5",
+        "observedAt": "2026-10-22T12:00:00Z"
+      }
+    }
+  ]
+}

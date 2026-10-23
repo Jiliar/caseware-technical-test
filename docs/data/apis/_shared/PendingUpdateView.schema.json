@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/PendingUpdateView.schema.json",
+  "title": "PendingUpdateView",
+  "description": "Composition of engagement offer state and change summary served to the UI detail (DISENO S7 (b) PendingUpdateView). Serving it records a SummaryViewed.v1 (EV-28, RF-048) when a summary is shown.",
+  "$comment": "Source: DISENO 3.8.6 (view model PendingUpdateView), S7 (b)(d) GetPendingUpdateDetailQuery, (f), (h); PRD RF-035, RF-048, RF-050, RF-037. The full diff and the per-version breakdown are served by GET /v1/engagements/{engagementId}/pending-update/diff and /breakdown (DEC-34). Audience: public (S7). Residency: regional (engagement part) + global non-confidential summary content cached in the cell.",
+  "type": "object",
+  "properties": {
+    "engagement": {
+      "$ref": "EngagementPendingUpdate.schema.json",
+      "description": "State part (from S3)."
+    },
+    "summary": {
+      "type": "object",
+      "description": "Summary part (from S2 via SX-01b with cell cache).",
+      "properties": {
+        "summaryStatus": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "CACHED",
+            "UNAVAILABLE"
+          ],
+          "description": "AVAILABLE = read from S2; CACHED = served from the cell Redis cache while S2 is unavailable (stale-while-error, immutable content); UNAVAILABLE = 'summary not available, see diff' degraded state (DISENO S7 (h), SX-01b, 3.8.6)."
+        },
+        "record": {
+          "oneOf": [
+            {
+              "$ref": "SummaryRecord.schema.json"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Cumulative current->target summary (RF-050); null when UNAVAILABLE or when there is no offer."
+        }
+      },
+      "required": [
+        "summaryStatus",
+        "record"
+      ],
+      "additionalProperties": false
+    },
+    "freshness": {
+      "$ref": "FreshnessBadge.schema.json"
+    }
+  },
+  "required": [
+    "engagement",
+    "summary",
+    "freshness"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "engagement": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "branch": "main",
+        "currentVersion": "v3",
+        "classification": "CLASSIFIED",
+        "offer": {
+          "target": "v7",
+          "since": "2026-10-22T10:00:05Z",
+          "status": "PENDING",
+          "previouslyDeclined": [
+            "v5"
+          ]
+        },
+        "flags": [],
+        "updatedAt": "2026-10-22T10:00:05Z",
+        "declineHistory": [
+          {
+            "declinedVersion": "v5",
+            "userId": "44444444-4444-4444-8444-444444444444",
+            "summaryId": "56565656-5656-4565-8565-565656565656",
+            "decidedAt": "2026-09-15T14:00:00Z"
+          }
+        ],
+        "intermediateVersions": [
+          "v4",
+          "v5"
+        ]
+      },
+      "summary": {
+        "summaryStatus": "AVAILABLE",
+        "record": {
+          "summaryId": "55555555-5555-4555-8555-555555555555",
+          "templateId": "33333333-3333-4333-8333-333333333333",
+          "from": "v3",
+          "to": "v7",
+          "locale": "en-CA",
+          "kind": "NARRATIVE",
+          "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+          "promptVersion": "p-2026-10",
+          "modelId": "example-model-2026-01-01",
+          "outputHash": "0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9",
+          "generatedAt": "2026-10-22T10:02:00Z",
+          "invalidatedAt": null,
+          "output": {
+            "headline": "Revenue section reorganised and one new checklist question",
+            "changes": [
+              {
+                "description": "A new question about related-party disclosures was added to the planning checklist.",
+                "diffPaths": [
+                  "/sections/planning/checklist/items/12"
+                ]
+              }
+            ],
+            "impact": "Engagements that apply v7 get one more planning question to answer."
+          }
+        }
+      },
+      "freshness": {
+        "updatedAt": "2026-10-22T10:00:05Z",
+        "notice": "CURRENT"
+      }
+    }
+  ]
+}

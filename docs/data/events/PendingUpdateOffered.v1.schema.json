@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/PendingUpdateOffered.v1.schema.json",
+  "title": "PendingUpdateOffered.v1",
+  "description": "A single pending offer (best reachable target) was materialised for an engagement. Emitted by the CDC relay from the engagement_state transition.",
+  "$comment": "Source: DISENO 4.3 catalog EV-17; RF-019, RF-064; US-02.3.1. Producer: ms-engagement-index. Consumers: ms-audit-ledger. Channel: SNS ms-engagement-index -> SQS ms-audit-ledger. Ordering/partition key: engagementId. Idempotency key: eventId (deterministic, derived from the DynamoDB Streams record). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-17",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS ms-audit-ledger",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-engagement-index"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId (deterministic, derived from the DynamoDB Streams record)",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "PendingUpdateOffered"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "currentVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Current base version (EngagementState.currentVersion)."
+        },
+        "targetVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Offered target version (EngagementState.offerTarget)."
+        },
+        "previouslyDeclined": {
+          "type": "array",
+          "items": {
+            "$ref": "envelope.schema.json#/$defs/versionLabel"
+          },
+          "description": "Versions included in the offer that were declined before (EngagementState.previouslyDeclined)."
+        },
+        "offerSince": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Offer start instant (EngagementState.offerSince)."
+        },
+        "cause": {
+          "type": "string",
+          "enum": [
+            "PUBLISH",
+            "WITHDRAW_RETARGET",
+            "CREATED",
+            "RECOMPUTE"
+          ],
+          "description": "Why the offer was (re)computed."
+        }
+      },
+      "required": [
+        "engagementId",
+        "firmId",
+        "templateId",
+        "currentVersion",
+        "targetVersion",
+        "previouslyDeclined",
+        "offerSince",
+        "cause"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000017",
+      "eventType": "PendingUpdateOffered",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000017",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "currentVersion": "v3",
+        "targetVersion": "v7",
+        "previouslyDeclined": [
+          "v5"
+        ],
+        "offerSince": "2026-10-22T10:00:05Z",
+        "cause": "PUBLISH"
+      }
+    }
+  ]
+}

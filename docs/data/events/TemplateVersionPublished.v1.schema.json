@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/TemplateVersionPublished.v1.schema.json",
+  "title": "TemplateVersionPublished.v1",
+  "description": "Hook emitted by the existing Templates Service when a template version is published. Raw input of ms-template-catalog, which validates it into the version DAG. Template metadata only, no firm data.",
+  "$comment": "Source: DISENO 4.3 catalog EV-01; RF-001, RF-086; US-01.1.2. Producer: templates-service. Consumers: ms-template-catalog. Channel: templates-service outbox -> global EventBridge bus -> rule -> SQS FIFO global-ms-template-catalog-templates-service.fifo. Ordering/partition key: templateId (FIFO MessageGroupId). Idempotency key: eventId; publishId. Guarantee: at-least-once, ordered per template (FIFO). Versioning: contract with the platform team (owner of the Templates Service); additive within v1. dataClass: TEMPLATE_PUBLIC (DISENO 4.3). Template metadata only; stays in the home region (not replicated to cells).",
+  "x-catalogId": "EV-01",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": false,
+  "x-producers": [
+    "templates-service"
+  ],
+  "x-consumers": [
+    "ms-template-catalog"
+  ],
+  "x-channel": "templates-service outbox -> global EventBridge bus -> rule -> SQS FIFO global-ms-template-catalog-templates-service.fifo",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "global-ms-template-catalog-templates-service.fifo"
+  ],
+  "x-orderingKey": "templateId (FIFO MessageGroupId)",
+  "x-idempotencyKey": "eventId; publishId",
+  "x-deliveryGuarantee": "at-least-once, ordered per template (FIFO)",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "TemplateVersionPublished"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "templates-service"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "publishId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Publish id issued for this publication (root correlationId of the publish flow, DISENO 7.2)."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Published version label."
+        },
+        "parentVersions": {
+          "type": "array",
+          "items": {
+            "$ref": "envelope.schema.json#/$defs/versionLabel"
+          },
+          "description": "Parent version labels (0..n; 2 or more on a merge, PRD 2.1)."
+        },
+        "branch": {
+          "type": "string",
+          "description": "Market branch of the version."
+        },
+        "publishedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Publication instant in the Templates Service."
+        }
+      },
+      "required": [
+        "publishId",
+        "templateId",
+        "version",
+        "parentVersions",
+        "branch",
+        "publishedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000001",
+      "eventType": "TemplateVersionPublished",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "templates-service",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": null,
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v7",
+        "parentVersions": [
+          "v5"
+        ],
+        "branch": "main",
+        "publishedAt": "2026-10-22T10:00:00Z"
+      }
+    }
+  ]
+}

@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-publish-fanout/getJob.response.schema.json",
+  "title": "getJob response",
+  "description": "GET /v1/jobs/{jobId} - responses per status code. Progress and counters of a fan-out job (FanOutStatusQuery).",
+  "$comment": "Source: DISENO S4 (b), (d) StartFanOutUseCase/CancelFanOutUseCase/FanOutStatusQuery, (e) operator APIs (RF-121), AP-F6, AP-F7; PRD RF-121, RF-022; US-08.2.1. Audience: OPERATOR (operator console / role-restricted). Residency: REGIONAL (cell); job view is OPERATIONAL (counters, no engagement ids). Idempotency: safe read (GET). Pagination: none (single resource).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        404
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Job.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Job."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "#/$defs/FanOutJob"
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "FanOutJob": {
+      "type": "object",
+      "description": "FanOutJob view (DISENO 3.8.6): fan-out progress of RF-022 (for a publish jobId = publishId).",
+      "properties": {
+        "jobId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Job id (= publishId for a publish)."
+        },
+        "publishId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Publish id (optional, CMD-03)."
+        },
+        "templateId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Template id (optional)."
+        },
+        "targetVersion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Target version label (optional)."
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "INTERACTIVE",
+            "PUBLISH",
+            "BACKFILL",
+            "RECONCILIATION"
+          ],
+          "description": "PriorityClass."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "RUNNING",
+            "PAUSED",
+            "COMPLETED",
+            "PARTIAL",
+            "CANCELLED"
+          ],
+          "description": "Job status (DISENO FanOutJob.status; same values as fanout_job.state)."
+        },
+        "expected": {
+          "type": "integer",
+          "description": "Expected tasks.",
+          "minimum": 0
+        },
+        "done": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks DONE."
+        },
+        "failed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks FAILED (logical DLQ)."
+        },
+        "obsolete": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tasks OBSOLETE (cancelled, withdrawn version or newer publication)."
+        },
+        "cancelRequested": {
+          "type": "boolean",
+          "description": "Cancellation requested (FW-014)."
+        },
+        "eta": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "Estimated completion: remaining tasks x ~1 min / effective concurrency (Little's law, DISENO S4 (l)); null when not running."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation instant."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update."
+        }
+      },
+      "required": [
+        "jobId",
+        "publishId",
+        "templateId",
+        "targetVersion",
+        "priority",
+        "status",
+        "expected",
+        "done",
+        "failed",
+        "obsolete",
+        "cancelRequested",
+        "eta",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "jobId": "66666666-6666-4666-8666-666666666666",
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "targetVersion": "v7",
+        "priority": "PUBLISH",
+        "status": "RUNNING",
+        "expected": 20000,
+        "done": 12000,
+        "failed": 40,
+        "obsolete": 0,
+        "cancelRequested": false,
+        "eta": "2026-10-22T13:20:00Z",
+        "createdAt": "2026-10-22T10:00:05Z",
+        "updatedAt": "2026-10-22T11:05:00Z"
+      }
+    }
+  ]
+}

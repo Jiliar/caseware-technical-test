@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_consumed/engagements-system/inspectEngagement.response.schema.json",
+  "title": "inspectEngagement response",
+  "description": "inspectEngagement - responses per status code. ~1 min per-engagement downstream operation of the Engagements System, called by ms-publish-fanout under Bulkhead(C_max per cell) -> RateLimiter -> TimeLimiter(T_call) -> CircuitBreaker -> Retry(N_reint).",
+  "$comment": "Source: DISENO S4 (a) 'inspect/classify' operation, (d) DownstreamEngagementClient, (g) idempotencyKey = jobId:engagementId:targetVersion (DEC-30), (h), (k) result (templateId, version); DISENO 4.8 SX-03; ADR-020 SX-03 + assumption on idempotency; ADR-010; E-51, E-34; SUP-08, OQ-05. Audience: CONSUMED CONTRACT (external system, client-side expectation) - SX-03 (S4 -> external downstream). Residency: REGIONAL (cell); only EngagementRef goes out and only (templateId, version) comes back (DISENO S4 (k)). Idempotency: expected idempotent per idempotencyKey (assumption SUP-08 b / OQ-05; if not, no automatic retry after timeout, ADR-020). Pagination: n/a. CONSUMED CONTRACT: owned by an external team; method, path, authentication and error bodies are NOT defined by the documents and are not designed here. Fallback: task -> RetryScheduled, logical DLQ.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        503
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status503"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Success as expected by the client.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Success as expected by the client."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../../_shared/common-headers.schema.json#/$defs/correlationId"
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Result (templateId, version) mapped to EngagementVersionInspected.v1.",
+          "properties": {
+            "engagementId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Engagement id."
+            },
+            "templateId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Template id observed."
+            },
+            "version": {
+              "type": "string",
+              "description": "Template version label observed.",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "engagementId",
+            "templateId",
+            "version"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused.",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Client error: NOT retried (FW-019: 4xx without retry); the task/batch is failed or the saga paused."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status503": {
+      "type": "object",
+      "description": "503: Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it.",
+      "properties": {
+        "status": {
+          "const": 503,
+          "description": "Transient failure (5xx/timeout/throttling): retried with backoff up to N_reint; circuit breaker counts it."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {},
+          "required": [],
+          "additionalProperties": false
+        },
+        "body": {
+          "description": "Error body defined by the owning team (unknown)."
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "66666666-6666-4666-8666-666666666666"
+      },
+      "body": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v3"
+      }
+    }
+  ]
+}

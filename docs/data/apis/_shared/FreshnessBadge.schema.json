@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/FreshnessBadge.schema.json",
+  "title": "FreshnessBadge",
+  "description": "Freshness indicator attached to UI data (DISENO S7 (b) FreshnessBadge, RF-037).",
+  "$comment": "Source: DISENO 3.8.6 (view model FreshnessBadge), S7 (b); PRD RF-037, RF-015; P-09. Audience: public. Residency: regional.",
+  "type": "object",
+  "properties": {
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Freshness of the indicator: last update of the underlying projection item (RF-037)."
+    },
+    "notice": {
+      "type": "string",
+      "enum": [
+        "CURRENT",
+        "DATA_MAY_BE_DELAYED",
+        "VERIFYING"
+      ],
+      "description": "VERIFYING when the engagement is UNCLASSIFIED (RF-015: never shown as up to date); DATA_MAY_BE_DELAYED when updatedAt is older than now - D_stale or the summary was served from cache; CURRENT otherwise (DISENO 3.8.6)."
+    }
+  },
+  "required": [
+    "updatedAt",
+    "notice"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "updatedAt": "2026-10-22T10:00:05Z",
+      "notice": "CURRENT"
+    }
+  ]
+}

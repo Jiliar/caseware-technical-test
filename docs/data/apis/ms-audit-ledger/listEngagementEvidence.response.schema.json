@@ -1,0 +1,412 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-audit-ledger/listEngagementEvidence.response.schema.json",
+  "title": "listEngagementEvidence response",
+  "description": "GET /v1/evidence/engagements/{engagementId} - responses per status code. Audit trail of one engagement in a date range: summary views, decisions and offer lifecycle (paginated).",
+  "$comment": "Source: DISENO S6 (b) AuditEntry/SummaryProvenance, (c) AP-L1/AP-L2, (d) ReconstructSummaryEvidenceQuery, (e) compliance APIs, (k); PRD RF-048, RF-068, RNF-025; US-05.3.2. Audience: OPERATOR (operator console / role-restricted). Residency: REGIONAL (cell; regional WORM); read access is audited and role-restricted (compliance). Idempotency: safe read (GET); the read itself is audited. Pagination: cursor + limit <= N_pagemax (DISENO 3.6 (e), 3.8.5).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Evidence page.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Evidence page."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "Page envelope (_shared/pagination.schema.json).",
+          "properties": {
+            "engagementId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Engagement id."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/SummaryViewEntry"
+                  },
+                  {
+                    "$ref": "#/$defs/DecisionEntry"
+                  },
+                  {
+                    "$ref": "#/$defs/OfferLifecycleEntry"
+                  }
+                ]
+              },
+              "description": "Entries ordered by occurredAt."
+            },
+            "nextCursor": {
+              "$ref": "../_shared/pagination.schema.json#/$defs/nextCursor"
+            }
+          },
+          "required": [
+            "engagementId",
+            "items",
+            "nextCursor"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "SummaryViewEntry": {
+      "type": "object",
+      "description": "summary_view row.",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "SummaryViewEntry",
+          "description": "AuditEntry subtype."
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Source eventId (EV-28)."
+        },
+        "summaryId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Summary id."
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Firm id."
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Viewer."
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Instant."
+        },
+        "region": {
+          "type": "string",
+          "description": "Region/cell.",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "entryType",
+        "eventId",
+        "summaryId",
+        "engagementId",
+        "firmId",
+        "userId",
+        "occurredAt",
+        "region"
+      ],
+      "additionalProperties": false
+    },
+    "DecisionEntry": {
+      "type": "object",
+      "description": "decision row.",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "DecisionEntry",
+          "description": "AuditEntry subtype."
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Source eventId (EV-20)."
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Firm id."
+        },
+        "userId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Decider."
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "DECLINED"
+          ],
+          "description": "Decision (EV-20)."
+        },
+        "fromVersion": {
+          "type": "string",
+          "description": "From version label.",
+          "minLength": 1
+        },
+        "toVersion": {
+          "type": "string",
+          "description": "To version label.",
+          "minLength": 1
+        },
+        "summaryId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Summary shown."
+        },
+        "discrepancy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "NONE",
+            "STALE_OFFER",
+            "APPLIED_WITHDRAWN"
+          ],
+          "description": "Discrepancy (EV-20)."
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Instant."
+        },
+        "region": {
+          "type": "string",
+          "description": "Region/cell.",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "entryType",
+        "eventId",
+        "engagementId",
+        "firmId",
+        "userId",
+        "decision",
+        "fromVersion",
+        "toVersion",
+        "summaryId",
+        "discrepancy",
+        "occurredAt",
+        "region"
+      ],
+      "additionalProperties": false
+    },
+    "OfferLifecycleEntry": {
+      "type": "object",
+      "description": "offer_lifecycle row.",
+      "properties": {
+        "entryType": {
+          "type": "string",
+          "const": "OfferLifecycleEntry",
+          "description": "AuditEntry subtype."
+        },
+        "eventId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Source eventId (EV-17..EV-19, EV-21)."
+        },
+        "engagementId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Engagement id."
+        },
+        "templateId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Template id."
+        },
+        "targetVersion": {
+          "type": "string",
+          "description": "Target version label.",
+          "minLength": 1
+        },
+        "transition": {
+          "type": "string",
+          "enum": [
+            "OFFERED",
+            "SUPERSEDED",
+            "WITHDRAWN",
+            "APPLIED_WITHDRAWN"
+          ],
+          "description": "offer_lifecycle.transition (EV-17, EV-18, EV-19, EV-21; DISENO 3.8.2)."
+        },
+        "occurredAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Instant."
+        }
+      },
+      "required": [
+        "entryType",
+        "eventId",
+        "engagementId",
+        "templateId",
+        "targetVersion",
+        "transition",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "items": [
+          {
+            "entryType": "OfferLifecycleEntry",
+            "eventId": "14141414-1414-4141-8141-141414141414",
+            "engagementId": "11111111-1111-4111-8111-111111111111",
+            "templateId": "33333333-3333-4333-8333-333333333333",
+            "targetVersion": "v7",
+            "transition": "OFFERED",
+            "occurredAt": "2026-10-22T10:00:05Z"
+          },
+          {
+            "entryType": "SummaryViewEntry",
+            "eventId": "12121212-1212-4121-8121-121212121212",
+            "summaryId": "55555555-5555-4555-8555-555555555555",
+            "engagementId": "11111111-1111-4111-8111-111111111111",
+            "firmId": "22222222-2222-4222-8222-222222222222",
+            "userId": "44444444-4444-4444-8444-444444444444",
+            "occurredAt": "2026-10-23T08:59:00Z",
+            "region": "EU"
+          },
+          {
+            "entryType": "DecisionEntry",
+            "eventId": "13131313-1313-4131-8131-131313131313",
+            "engagementId": "11111111-1111-4111-8111-111111111111",
+            "firmId": "22222222-2222-4222-8222-222222222222",
+            "userId": "44444444-4444-4444-8444-444444444444",
+            "decision": "APPLIED",
+            "fromVersion": "v3",
+            "toVersion": "v7",
+            "summaryId": "55555555-5555-4555-8555-555555555555",
+            "discrepancy": "NONE",
+            "occurredAt": "2026-10-23T09:00:00Z",
+            "region": "EU"
+          }
+        ],
+        "nextCursor": null
+      }
+    }
+  ]
+}

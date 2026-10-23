@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/DecisionRecorded.v1.schema.json",
+  "title": "DecisionRecorded.v1",
+  "description": "The index captured an apply/decline decision (from EngagementUpdateApplied.v1 / EngagementUpdateDeclined.v1) and flags discrepancies with the offer state.",
+  "$comment": "Source: DISENO 4.3 catalog EV-20; RF-060..RF-062, RF-065, RF-068; US-05.3.2. Producer: ms-engagement-index. Consumers: ms-audit-ledger, ms-experience-gateway. Channel: SNS ms-engagement-index -> SQS (ms-audit-ledger, ms-experience-gateway). Ordering/partition key: engagementId. Idempotency key: eventId of the originating hook. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-20",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger",
+    "ms-experience-gateway"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS (ms-audit-ledger, ms-experience-gateway)",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-engagement-index",
+    "{cell}-ms-experience-gateway-ms-engagement-index"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId of the originating hook",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "DecisionRecorded"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "userId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "User who decided."
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPLIED",
+            "DECLINED"
+          ],
+          "description": "Decision (same values as ms-audit-ledger decision.decision)."
+        },
+        "fromVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Base version at decision time."
+        },
+        "toVersion": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Decided target version (applied or declined)."
+        },
+        "summaryId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Summary shown when deciding."
+        },
+        "discrepancy": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "STALE_OFFER",
+            "APPLIED_WITHDRAWN"
+          ],
+          "description": "Discrepancy detected (same values as ms-audit-ledger decision.discrepancy)."
+        },
+        "decidedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Decision instant."
+        }
+      },
+      "required": [
+        "engagementId",
+        "firmId",
+        "userId",
+        "decision",
+        "fromVersion",
+        "toVersion",
+        "summaryId",
+        "discrepancy",
+        "decidedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000020",
+      "eventType": "DecisionRecorded",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000020",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "userId": "44444444-4444-4444-8444-444444444444",
+        "decision": "APPLIED",
+        "fromVersion": "v3",
+        "toVersion": "v7",
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "discrepancy": "NONE",
+        "decidedAt": "2026-10-23T09:00:00Z"
+      }
+    }
+  ]
+}

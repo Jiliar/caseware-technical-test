@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/PendingUpdateSuperseded.v1.schema.json",
+  "title": "PendingUpdateSuperseded.v1",
+  "description": "A pending offer was replaced by a newer reachable target (offerStatus SUPERSEDED).",
+  "$comment": "Source: DISENO 4.3 catalog EV-18; RF-063; US-06.2.1. Producer: ms-engagement-index. Consumers: ms-audit-ledger. Channel: SNS ms-engagement-index -> SQS ms-audit-ledger. Ordering/partition key: engagementId. Idempotency key: eventId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-18",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-engagement-index"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger"
+  ],
+  "x-channel": "SNS ms-engagement-index -> SQS ms-audit-ledger",
+  "x-snsTopic": "{cell}-ms-engagement-index-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-engagement-index"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "PendingUpdateSuperseded"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-engagement-index"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "supersededTarget": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Previous offer target."
+        },
+        "newTarget": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "New offer target."
+        },
+        "occurredAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Instant of the transition (as listed in the catalog payload; normally equal to the envelope occurredAt)."
+        }
+      },
+      "required": [
+        "engagementId",
+        "templateId",
+        "supersededTarget",
+        "newTarget",
+        "occurredAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000018",
+      "eventType": "PendingUpdateSuperseded",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-engagement-index",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000018",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "supersededTarget": "v6",
+        "newTarget": "v7",
+        "occurredAt": "2026-10-22T10:00:05Z"
+      }
+    }
+  ]
+}

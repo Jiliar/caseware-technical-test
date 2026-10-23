@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/transport-attributes.schema.json",
+  "title": "TransportAttributes",
+  "description": "Contract of the SNS/SQS message attributes (MessageAttributes map) that accompany every envelope, so consumers and SNS filter policies can route, filter and trace without deserialising the body. The message body is the full envelope (envelope.schema.json). Also documents the FIFO send parameters of the only FIFO queue and the EventBridge mapping.",
+  "$comment": "Source: DISENO 4.2 governance rule 'Atributos de mensaje' (eventType, schemaVersion, traceparent, correlationId, cellId as SNS/SQS attributes); ADR-021 same rule; DISENO 7.2 (traceparent and correlationId travel in the envelope AND as SNS/SQS/EventBridge message attributes); DISENO 4.1 (FIFO only for ms-template-catalog ingest: MessageGroupId = templateId, deduplication by eventId; filter policies by eventType; EventBridge cross-region rules by detail-type whitelist). DataType: schemaVersion is a Number attribute (it is an integer); the other attributes are String.",
+  "type": "object",
+  "properties": {
+    "eventType": {
+      "$ref": "#/$defs/stringAttribute",
+      "description": "= envelope.eventType (e.g. 'VersionGraphNodeAdded'). Used by SNS subscription filter policies (one SQS queue per consumer receives only the types it consumes)."
+    },
+    "schemaVersion": {
+      "$ref": "#/$defs/numberAttribute",
+      "description": "= envelope.schemaVersion (major version, e.g. '1'). Lets a consumer filter v1 vs v2 while both are published in parallel (expand/contract)."
+    },
+    "traceparent": {
+      "allOf": [
+        { "$ref": "#/$defs/stringAttribute" },
+        { "properties": { "StringValue": { "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$" } } }
+      ],
+      "description": "= envelope.traceparent (W3C Trace Context). Each consumer opens a child span with a link to the producer span (RNF-017)."
+    },
+    "correlationId": {
+      "$ref": "#/$defs/stringAttribute",
+      "description": "= envelope.correlationId (the publishId for a publish flow)."
+    },
+    "cellId": {
+      "$ref": "#/$defs/stringAttribute",
+      "description": "= envelope.cellId ('global' or the regional cell id)."
+    }
+  },
+  "required": ["eventType", "schemaVersion", "traceparent", "correlationId", "cellId"],
+  "additionalProperties": false,
+  "$defs": {
+    "stringAttribute": {
+      "type": "object",
+      "description": "SNS/SQS MessageAttributeValue of DataType String.",
+      "properties": {
+        "DataType": { "const": "String" },
+        "StringValue": { "type": "string", "minLength": 1 }
+      },
+      "required": ["DataType", "StringValue"],
+      "additionalProperties": false
+    },
+    "numberAttribute": {
+      "type": "object",
+      "description": "SNS/SQS MessageAttributeValue of DataType Number (value sent as a string).",
+      "properties": {
+        "DataType": { "const": "Number" },
+        "StringValue": { "type": "string", "pattern": "^[1-9][0-9]*$" }
+      },
+      "required": ["DataType", "StringValue"],
+      "additionalProperties": false
+    },
+    "fifoSendParameters": {
+      "title": "FIFO send parameters (global-ms-template-catalog-templates-service.fifo)",
+      "description": "Parameters set by the EventBridge rule target when delivering TemplateVersionPublished.v1 / TemplateVersionWithdrawn.v1 to the only FIFO queue (ms-template-catalog ingest). Consumer concurrency is 1 per MessageGroupId (DISENO S1 (h)).",
+      "type": "object",
+      "properties": {
+        "MessageGroupId": { "$ref": "envelope.schema.json#/$defs/uuid", "description": "= payload.templateId (order per template)." },
+        "MessageDeduplicationId": { "$ref": "envelope.schema.json#/$defs/uuid", "description": "= envelope.eventId." }
+      },
+      "required": ["MessageGroupId", "MessageDeduplicationId"],
+      "additionalProperties": false
+    }
+  },
+  "x-envelopeToAttributeMapping": [
+    { "envelopeField": "eventType", "snsSqsAttribute": "eventType", "eventBridge": "detail-type (whitelist pattern of cross-region rules)" },
+    { "envelopeField": "schemaVersion", "snsSqsAttribute": "schemaVersion", "eventBridge": "inside detail" },
+    { "envelopeField": "traceparent", "snsSqsAttribute": "traceparent", "eventBridge": "inside detail (the envelope field traceparent travels in the EventBridge detail; DISENO 7.2)" },
+    { "envelopeField": "correlationId", "snsSqsAttribute": "correlationId", "eventBridge": "inside detail" },
+    { "envelopeField": "cellId", "snsSqsAttribute": "cellId", "eventBridge": "inside detail" },
+    { "envelopeField": "eventId", "snsSqsAttribute": "(none; body only) / FIFO MessageDeduplicationId", "eventBridge": "inside detail" },
+    { "envelopeField": "payload.templateId (EV-01, EV-02)", "snsSqsAttribute": "FIFO MessageGroupId", "eventBridge": "rule target parameter" }
+  ],
+  "x-queueTypes": {
+    "fifo": ["global-ms-template-catalog-templates-service.fifo"],
+    "standard": "every other SQS queue: per-consumer queues '{cell}-{consumer}-{source}', command queues '{cell}-{service}-commands', all DLQs '<queue>-dlq' (a FIFO queue's DLQ must itself be FIFO, AWS rule) and the internal work queue 'ms-engagement-index-publish-units'",
+    "snsTopics": "standard SNS topics '{cell}-{service}-events' (no SNS FIFO)",
+    "why": "DISENO 4.1: FIFO only where order per template is needed at tiny volume; cells use standard SQS because ordering is enforced in the consumer (engagementSeq, templateSeq, conditional writes)."
+  },
+  "x-orderingKeysPerStream": [
+    { "stream": "EV-01, EV-02 (Templates Service hooks)", "key": "templateId", "enforcedBy": "SQS FIFO MessageGroupId" },
+    { "stream": "EV-03, EV-04 (version graph)", "key": "templateId + templateSeq", "enforcedBy": "consumer (appliedSeq = templateSeq - 1)" },
+    { "stream": "EV-05, EV-06 (summaries)", "key": "summaryKey", "enforcedBy": "logical key only" },
+    { "stream": "EV-07", "key": "summaryId", "enforcedBy": "logical key only" },
+    { "stream": "EV-08, EV-09, EV-10, EV-12 (Engagement System hooks)", "key": "engagementId + engagementSeq", "enforcedBy": "consumer (lastSeq < :seq)" },
+    { "stream": "EV-11, EV-13..EV-21, EV-24, EV-28", "key": "engagementId", "enforcedBy": "consumer (conditional writes, lastHookAt / observedAt)" },
+    { "stream": "EV-22", "key": "firmId", "enforcedBy": "coalescible; last value wins in the gateway" },
+    { "stream": "EV-23", "key": "publishId", "enforcedBy": "logical key only" },
+    { "stream": "EV-25, EV-26, CMD-03..CMD-06", "key": "jobId", "enforcedBy": "logical key only" },
+    { "stream": "EV-27", "key": "runId", "enforcedBy": "logical key only" },
+    { "stream": "EV-29", "key": "day", "enforcedBy": "logical key only" },
+    { "stream": "CMD-01, CMD-02", "key": "summaryKey", "enforcedBy": "single-flight in generation_job" },
+    { "stream": "CMD-07", "key": "(none stated in the catalog)", "enforcedBy": "-" }
+  ],
+  "examples": [
+    {
+      "eventType": { "DataType": "String", "StringValue": "VersionGraphNodeAdded" },
+      "schemaVersion": { "DataType": "Number", "StringValue": "1" },
+      "traceparent": { "DataType": "String", "StringValue": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" },
+      "correlationId": { "DataType": "String", "StringValue": "66666666-6666-4666-8666-666666666666" },
+      "cellId": { "DataType": "String", "StringValue": "global" }
+    }
+  ]
+}

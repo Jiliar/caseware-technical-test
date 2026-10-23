@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+      # The Maven Wrapper pins the Maven version, so the runner's own Maven is not used.
+      - run: ./mvnw -B -ntp verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
+
+  logic-validation:
+    # Proves the logic checks need nothing but the JDK: no Maven, no third-party jars.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - name: Compile with javac
+        run: |
+          javac --release 25 -d target/validation $(find src/main -name '*.java') $(find src/test/java/com/caseware/fanout/fakes src/test/java/com/caseware/fanout/validation -name '*.java')
+      - name: Run logic validation
+        # pipefail keeps the validation's exit code although tee succeeds; it is captured so the summary's
+        # code fence is closed before the step fails.
+        shell: bash
+        run: |
+          set -o pipefail
+          status=0
+          echo '```text' >> "$GITHUB_STEP_SUMMARY"
+          java -cp target/validation com.caseware.fanout.validation.LogicValidation | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"

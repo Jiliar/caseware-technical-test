@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-experience-gateway/connections.schema.json",
+  "title": "connections item (Connection)",
+  "description": "Real-time (SSE) connection registry: Connection(connectionId, firmId, userId, expiresAt) (DISENO S7 (b)(c)). DISENO 'expiresAt' is stored as the TTL attribute 'ttl'.",
+  "$comment": "Table connections (per cell). Partition key only: PK = CONN#<connectionId>. GSI1: GSI1PK = FIRM#<firmId> (no sort key in DISENO). AP-G1: Query GSI1 (connections of a firm). TTL attribute ttl (= Connection.expiresAt; session duration, DISENO 5.1).",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"CONN#<connectionId>\".",
+      "pattern": "^CONN#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "GSI1PK": {
+      "type": "string",
+      "description": "GSI1 partition key. GSI1PK = \"FIRM#<firmId>\".",
+      "pattern": "^FIRM#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "Connection",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "connectionId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Connection id (uuid, DISENO 3.8.1)."
+    },
+    "firmId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Firm id."
+    },
+    "userId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "User id."
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter session duration (DISENO 5.1) (no value fixed in the docs). Equals Connection.expiresAt."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "ACTIVE"
+      ],
+      "description": "Constant ACTIVE; the item expires by TTL at the end of the session. Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "GSI1PK",
+    "entityType",
+    "connectionId",
+    "firmId",
+    "userId",
+    "ttl",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

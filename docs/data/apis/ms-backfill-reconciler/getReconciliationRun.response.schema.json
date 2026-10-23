@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-backfill-reconciler/getReconciliationRun.response.schema.json",
+  "title": "getReconciliationRun response",
+  "description": "GET /v1/reconciliation-runs/{runId} - responses per status code. One reconciliation run with its result.",
+  "$comment": "Source: DISENO S5 (b) ReconciliationRun, (c), (e); EV-27 ReconciliationRunCompleted.v1; PRD RF-083, RF-088, SLO-02. Audience: OPERATOR (operator console / role-restricted). Residency: REGIONAL (cell); OPERATIONAL aggregates. Idempotency: safe read (GET). Pagination: none (single resource).",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        404
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Run.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Run."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "ReconciliationRun view (DISENO 3.8.6).",
+          "properties": {
+            "runId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Run id."
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "EXPORT",
+                "SAMPLE",
+                "TARGETED"
+              ],
+              "description": "Run kind."
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "TEMPLATE",
+                "FIRM",
+                "ENGAGEMENTS",
+                null
+              ],
+              "description": "Scope of a TARGETED run; null otherwise."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "RUNNING",
+                "COMPLETED"
+              ],
+              "description": "Run status (reconciliation_run.state)."
+            },
+            "startedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Start."
+            },
+            "finishedAt": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time",
+              "description": "End; null while RUNNING."
+            },
+            "sampleSize": {
+              "type": "integer",
+              "description": "Sample size.",
+              "minimum": 0
+            },
+            "checked": {
+              "type": "integer",
+              "description": "Checked.",
+              "minimum": 0
+            },
+            "discrepancies": {
+              "type": "integer",
+              "description": "Discrepancies.",
+              "minimum": 0
+            },
+            "repaired": {
+              "type": "integer",
+              "description": "Repaired.",
+              "minimum": 0
+            },
+            "accuracyEstimate": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "1 - discrepancies / checked (SLO-02 SLI); null while RUNNING."
+            }
+          },
+          "required": [
+            "runId",
+            "kind",
+            "status",
+            "startedAt",
+            "finishedAt",
+            "sampleSize",
+            "checked",
+            "discrepancies",
+            "repaired",
+            "accuracyEstimate",
+            "scope"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "runId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "kind": "SAMPLE",
+        "status": "COMPLETED",
+        "startedAt": "2026-10-22T02:00:00Z",
+        "finishedAt": "2026-10-22T03:10:00Z",
+        "sampleSize": 2000,
+        "checked": 2000,
+        "discrepancies": 4,
+        "repaired": 4,
+        "accuracyEstimate": 0.998,
+        "scope": null
+      }
+    }
+  ]
+}

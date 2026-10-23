@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/envelope.schema.json",
+  "title": "EventEnvelope",
+  "description": "Common contract (metadata) of every event and command that travels through EventBridge, SNS and SQS. Business data goes in 'payload'; each <Name>.v<n>.schema.json constrains eventType, schemaVersion, kind, producer and payload. Fields are exactly those of the EventEnvelope record of the event-contracts library.",
+  "$comment": "Source: DISENO 4.2 (EventEnvelope record and governance rules); ADR-021 decision 2; DISENO 7.2 (traceparent and correlationId in envelope and message attributes). dataClass is NOT an envelope field: each schema declares it (annotation x-dataClass). Sequence numbers (templateSeq, engagementSeq) are payload fields per the catalog (DISENO 4.3), not envelope fields.",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "$ref": "envelope.schema.json#/$defs/uuid",
+      "description": "Universal idempotency key (INV-07). Consumers deduplicate by it. For DynamoDB CDC relays it is deterministic (hash of PK + version, ADR-019), expressed as a name-based UUID v5 of PK + version (DISENO 4.7)."
+    },
+    "eventType": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]+$",
+      "description": "Message name without version suffix, e.g. 'VersionGraphNodeAdded'. Past-tense fact for events, imperative verb for commands. Also the SNS/SQS 'eventType' message attribute and the EventBridge detail-type."
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Major contract version (1 for v1). The record rejects values < 1."
+    },
+    "occurredAt": {
+      "$ref": "envelope.schema.json#/$defs/instant",
+      "description": "Instant of the fact at the producer (ISO-8601, UTC)."
+    },
+    "producer": {
+      "type": "string",
+      "enum": [
+        "ms-template-catalog",
+        "ms-change-summary",
+        "ms-engagement-index",
+        "ms-publish-fanout",
+        "ms-backfill-reconciler",
+        "ms-audit-ledger",
+        "ms-experience-gateway",
+        "templates-service",
+        "engagements-system"
+      ],
+      "description": "Producing service: one of the seven ms-* services or an existing system's hook (templates-service, engagements-system) (DISENO 4.1, DEC-22). There are no operator or pipeline producers."
+    },
+    "correlationId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Propagated from the request or the original publish; the root correlationId of a publish is its publishId (DISENO 7.2). Typed String in the record, so not constrained to uuid."
+    },
+    "causationId": {
+      "oneOf": [
+        {
+          "$ref": "envelope.schema.json#/$defs/uuid"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "eventId of the message that caused this one; null in root hooks (Templates Service / Engagement System) and in messages whose cause is not a message (an API call or a scheduler); correlationId still links them to the request or run."
+    },
+    "cellId": {
+      "type": "string",
+      "minLength": 1,
+      "examples": [
+        "global",
+        "eu",
+        "ca"
+      ],
+      "description": "Cell where the message was produced: 'global' for the home region or a regional cell id (example values, configurable)."
+    },
+    "traceparent": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$",
+      "description": "W3C Trace Context traceparent (version-traceid-parentid-flags); also sent as message attribute (RNF-017)."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "EVENT",
+        "COMMAND"
+      ],
+      "description": "MessageKind."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Business data; constrained by each message schema. Never workpaper content; bounded by S_payload (blobs by claim-check in S3)."
+    }
+  },
+  "required": [
+    "eventId",
+    "eventType",
+    "schemaVersion",
+    "occurredAt",
+    "producer",
+    "correlationId",
+    "causationId",
+    "cellId",
+    "traceparent",
+    "kind",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identifier (UUID), as in the DynamoDB/PostgreSQL schemas."
+    },
+    "instant": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 instant (UTC)."
+    },
+    "versionLabel": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Template version label issued by the Templates Service (natural key, not a uuid), e.g. 'v7'."
+    },
+    "dataClass": {
+      "type": "string",
+      "enum": [
+        "TEMPLATE_PUBLIC",
+        "ENGAGEMENT_REGIONAL",
+        "OPERATIONAL"
+      ],
+      "description": "Residency classification declared by every message schema (x-dataClass). Only TEMPLATE_PUBLIC may cross regions."
+    },
+    "priorityClass": {
+      "type": "string",
+      "enum": [
+        "INTERACTIVE",
+        "PUBLISH",
+        "BACKFILL",
+        "RECONCILIATION"
+      ],
+      "description": "PriorityClass of ms-publish-fanout (same values as FanOutJob.priority / FanOutTask.priority)."
+    },
+    "summaryKind": {
+      "type": "string",
+      "enum": [
+        "DETERMINISTIC",
+        "NARRATIVE"
+      ],
+      "description": "SummaryKind (same values as summary_record.kind)."
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000003",
+      "eventType": "VersionGraphNodeAdded",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-template-catalog",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "e0000000-0000-4000-8000-000000000001",
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v7",
+        "parents": [
+          "v5"
+        ],
+        "branch": "main",
+        "publishId": "66666666-6666-4666-8666-666666666666",
+        "templateSeq": 8,
+        "publishedAt": "2026-10-22T10:00:00Z"
+      }
+    }
+  ]
+}

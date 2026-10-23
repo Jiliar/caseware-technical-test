@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/SummaryViewed.v1.schema.json",
+  "title": "SummaryViewed.v1",
+  "description": "A user was shown a change summary for an engagement (regulatory evidence). Published from view_outbox via its Stream.",
+  "$comment": "Source: DISENO 4.3 catalog EV-28; RF-048; US-05.3.2. Producer: ms-experience-gateway. Consumers: ms-audit-ledger. Channel: SNS ms-experience-gateway -> SQS ms-audit-ledger. Ordering/partition key: engagementId. Idempotency key: eventId (generated when serving the detail). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: ENGAGEMENT_REGIONAL (DISENO 4.3). Stays inside the firm's cell; may carry engagement, firm or user identifiers but never workpaper content.",
+  "x-catalogId": "EV-28",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "ENGAGEMENT_REGIONAL",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-experience-gateway"
+  ],
+  "x-consumers": [
+    "ms-audit-ledger"
+  ],
+  "x-channel": "SNS ms-experience-gateway -> SQS ms-audit-ledger",
+  "x-snsTopic": "{cell}-ms-experience-gateway-events",
+  "x-sqsQueues": [
+    "{cell}-ms-audit-ledger-ms-experience-gateway"
+  ],
+  "x-orderingKey": "engagementId",
+  "x-idempotencyKey": "eventId (generated when serving the detail)",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "SummaryViewed"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-experience-gateway"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "summaryId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Summary shown."
+        },
+        "engagementId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Engagement id."
+        },
+        "firmId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Firm id."
+        },
+        "userId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Viewer."
+        },
+        "viewedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "View instant."
+        },
+        "kind": {
+          "$ref": "envelope.schema.json#/$defs/summaryKind"
+        },
+        "renderedHash": {
+          "type": "string",
+          "description": "Hash of the rendered content."
+        }
+      },
+      "required": [
+        "summaryId",
+        "engagementId",
+        "firmId",
+        "userId",
+        "viewedAt",
+        "kind",
+        "renderedHash"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000028",
+      "eventType": "SummaryViewed",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-experience-gateway",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000028",
+      "cellId": "eu",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "engagementId": "11111111-1111-4111-8111-111111111111",
+        "firmId": "22222222-2222-4222-8222-222222222222",
+        "userId": "44444444-4444-4444-8444-444444444444",
+        "viewedAt": "2026-10-23T08:59:00Z",
+        "kind": "NARRATIVE",
+        "renderedHash": "5e8f2a9c0b1d4e3f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f"
+      }
+    }
+  ]
+}

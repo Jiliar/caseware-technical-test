@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/VersionGraphNodeWithdrawn.v1.schema.json",
+  "title": "VersionGraphNodeWithdrawn.v1",
+  "description": "A version node was withdrawn from the DAG. Consumed in parallel (choreography): ms-change-summary invalidates summaries, ms-engagement-index retargets offers, ms-publish-fanout cancels in-flight work (RF-111).",
+  "$comment": "Source: DISENO 4.3 catalog EV-04; RF-004, RF-070, RF-071, RF-111; US-01.3.1, US-03.3.4. Producer: ms-template-catalog. Consumers: ms-engagement-index, ms-change-summary, ms-publish-fanout. Channel: global EventBridge bus -> rule -> SQS of ms-change-summary; global bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS. Ordering/partition key: templateId + templateSeq. Idempotency key: eventId; (templateId, templateSeq). Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: TEMPLATE_PUBLIC (DISENO 4.3). Crosses regions (whitelisted in the EventBridge rules); must not contain engagementId, firmId, userId or free text (contract test, DISENO 4.1).",
+  "x-catalogId": "EV-04",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": true,
+  "x-producers": [
+    "ms-template-catalog"
+  ],
+  "x-consumers": [
+    "ms-engagement-index",
+    "ms-change-summary",
+    "ms-publish-fanout"
+  ],
+  "x-channel": "global EventBridge bus -> rule -> SQS of ms-change-summary; global bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-engagement-index-ms-template-catalog",
+    "global-ms-change-summary-ms-template-catalog",
+    "{cell}-ms-publish-fanout-ms-template-catalog"
+  ],
+  "x-orderingKey": "templateId + templateSeq",
+  "x-idempotencyKey": "eventId; (templateId, templateSeq)",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "VersionGraphNodeWithdrawn"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-template-catalog"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "version": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Withdrawn version label."
+        },
+        "templateSeq": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "templateSeq assigned by ms-template-catalog, monotonic per template (ADR-018, DEC-03). Consumers apply strictly in order (appliedSeq = templateSeq - 1). minimum 1 because template.last_seq starts at 0 (DISENO S1 V1__registry_baseline.sql)."
+        },
+        "withdrawnAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Withdrawal instant."
+        }
+      },
+      "required": [
+        "templateId",
+        "version",
+        "templateSeq",
+        "withdrawnAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000004",
+      "eventType": "VersionGraphNodeWithdrawn",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-template-catalog",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": "c0000000-0000-4000-8000-000000000004",
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "version": "v6",
+        "templateSeq": 9,
+        "withdrawnAt": "2026-10-22T11:00:00Z"
+      }
+    }
+  ]
+}

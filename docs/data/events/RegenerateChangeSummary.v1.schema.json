@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/RegenerateChangeSummary.v1.schema.json",
+  "title": "RegenerateChangeSummary.v1",
+  "description": "Regenerate a summary with a new prompt version or model: creates a new SummaryRecord (new summaryId); the previous one never changes (RF-058). Sent by the evaluation pipeline of ms-change-summary after approving the prompt or model (DEC-25).",
+  "$comment": "Source: DISENO 4.4 catalog CMD-02; RF-054, RF-058; US-05.2.3. Producer: ms-change-summary. Consumers: ms-change-summary. Channel: SQS global-ms-change-summary-commands (sent by the evaluation pipeline of ms-change-summary, DEC-25). Ordering/partition key: summaryKey. Idempotency key: summaryKey + promptVersion + modelId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: TEMPLATE_PUBLIC (DISENO 4.4). Template metadata only; stays in the home region (not replicated to cells). Response event(s): ChangeSummaryReady.v1 (new summaryId; the previous record does not change).",
+  "x-catalogId": "CMD-02",
+  "x-messageKind": "COMMAND",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": false,
+  "x-producers": [
+    "ms-change-summary"
+  ],
+  "x-consumers": [
+    "ms-change-summary"
+  ],
+  "x-channel": "SQS global-ms-change-summary-commands (sent by the evaluation pipeline of ms-change-summary, DEC-25)",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "global-ms-change-summary-commands"
+  ],
+  "x-orderingKey": "summaryKey",
+  "x-idempotencyKey": "summaryKey + promptVersion + modelId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "RegenerateChangeSummary"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "COMMAND"
+    },
+    "producer": {
+      "const": "ms-change-summary"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "summaryKey": {
+          "type": "object",
+          "description": "SummaryKey value object (templateId, from, to, locale), DISENO S2 (b).",
+          "properties": {
+            "templateId": {
+              "$ref": "envelope.schema.json#/$defs/uuid",
+              "description": "Template id."
+            },
+            "from": {
+              "$ref": "envelope.schema.json#/$defs/versionLabel",
+              "description": "Source version label."
+            },
+            "to": {
+              "$ref": "envelope.schema.json#/$defs/versionLabel",
+              "description": "Target version label."
+            },
+            "locale": {
+              "type": "string",
+              "description": "Locale."
+            }
+          },
+          "required": [
+            "templateId",
+            "from",
+            "to",
+            "locale"
+          ],
+          "additionalProperties": false
+        },
+        "promptVersion": {
+          "type": "string",
+          "description": "Prompt version to use."
+        },
+        "modelId": {
+          "type": "string",
+          "description": "Provider model id to use (pinned, no alias, RF-054)."
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "PROMPT_CHANGED",
+            "MODEL_CHANGED"
+          ],
+          "description": "Why the evaluation pipeline regenerates: an approved prompt version or a new pinned model (RF-054, RF-058)."
+        }
+      },
+      "required": [
+        "summaryKey",
+        "promptVersion",
+        "modelId",
+        "reason"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000031",
+      "eventType": "RegenerateChangeSummary",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-change-summary",
+      "correlationId": "99999999-9999-4999-8999-999999999999",
+      "causationId": null,
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "COMMAND",
+      "payload": {
+        "summaryKey": {
+          "templateId": "33333333-3333-4333-8333-333333333333",
+          "from": "v3",
+          "to": "v7",
+          "locale": "en-CA"
+        },
+        "promptVersion": "p-2026-11",
+        "modelId": "example-model-2026-06-01",
+        "reason": "PROMPT_CHANGED"
+      }
+    }
+  ],
+  "x-responseEvents": [
+    "ChangeSummaryReady.v1 (new summaryId; the previous record does not change)"
+  ]
+}

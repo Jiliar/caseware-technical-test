@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-backfill-reconciler/resumeCampaign.response.schema.json",
+  "title": "resumeCampaign response",
+  "description": "POST /v1/campaigns/{campaignId}:resume - responses per status code. Resumes a paused campaign.",
+  "$comment": "Source: DISENO S5 (b) BackfillCampaign, (c) campaign/firm_progress AP-D3, (d) StartCampaignUseCase/PauseCampaignUseCase, (e) operator APIs, (h); PRD RF-014, RF-083, RNF-035, SLO-06; US-02.2.1. Audience: OPERATOR (operator console / role-restricted). Residency: REGIONAL (cell); firmId stays in the cell. Idempotency: Idempotency-Key required; idempotent transition (already RUNNING -> same 200); resuming retries FAILED tasks (RetryFanOutTasks.v1, DEC-24). Pagination: n/a.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        200,
+        400,
+        404,
+        409
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status200"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status404"
+    },
+    {
+      "$ref": "#/$defs/status409"
+    }
+  ],
+  "$defs": {
+    "status200": {
+      "type": "object",
+      "description": "200: Campaign after the transition.",
+      "properties": {
+        "status": {
+          "const": 200,
+          "description": "Campaign after the transition."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "$ref": "#/$defs/BackfillCampaign"
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status404": {
+      "type": "object",
+      "description": "404: Resource not found (problem type not-found).",
+      "properties": {
+        "status": {
+          "const": 404,
+          "description": "Resource not found (problem type not-found)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 404
+                },
+                "type": {
+                  "enum": [
+                    "not-found"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status409": {
+      "type": "object",
+      "description": "409: Conflict: transition not allowed from the current state (invalid-state) or Idempotency-Key reused with another body (idempotency-key-reuse).",
+      "properties": {
+        "status": {
+          "const": 409,
+          "description": "Conflict: transition not allowed from the current state (invalid-state) or Idempotency-Key reused with another body (idempotency-key-reuse)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 409
+                },
+                "type": {
+                  "enum": [
+                    "invalid-state",
+                    "idempotency-key-reuse"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "BackfillCampaign": {
+      "type": "object",
+      "description": "BackfillCampaign view (DISENO S5 (b), campaign + firm_progress aggregates).",
+      "properties": {
+        "campaignId": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Campaign id."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "CATALOG",
+            "EXPORT"
+          ],
+          "description": "Discovery source (DISENO 3.8.2)."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "RUNNING",
+            "PAUSED",
+            "COMPLETED"
+          ],
+          "description": "Campaign status (DISENO BackfillCampaign.status; same values as campaign.state)."
+        },
+        "quotaShare": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Share of the downstream quota for backfill (within B % of C_max, RNF-035)."
+        },
+        "valleyWindow": {
+          "type": "string",
+          "description": "Valley window in which the campaign runs (ValleyWindow VO; format not defined in DISENO).",
+          "minLength": 1
+        },
+        "priorityPolicy": {
+          "type": "string",
+          "description": "Priority policy (e.g. most active first; format not defined in DISENO).",
+          "minLength": 1
+        },
+        "coverage": {
+          "type": "object",
+          "description": "Coverage aggregated over FirmProgress rows (AP-D3); per-firm rows are not listed (unbounded).",
+          "properties": {
+            "discovered": {
+              "type": "integer",
+              "description": "Engagements discovered.",
+              "minimum": 0
+            },
+            "classificationRequested": {
+              "type": "integer",
+              "description": "Classification requested.",
+              "minimum": 0
+            },
+            "classified": {
+              "type": "integer",
+              "description": "Classified.",
+              "minimum": 0
+            },
+            "coverageRatio": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Coverage (SLI of SLO-06, discovery.coverage.ratio; target >= Cob_min)."
+            }
+          },
+          "required": [
+            "discovered",
+            "classificationRequested",
+            "classified",
+            "coverageRatio"
+          ],
+          "additionalProperties": false
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation instant."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update."
+        }
+      },
+      "required": [
+        "campaignId",
+        "kind",
+        "status",
+        "quotaShare",
+        "valleyWindow",
+        "priorityPolicy",
+        "coverage",
+        "createdAt",
+        "updatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 200,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "campaignId": "77777777-7777-4777-8777-777777777777",
+        "kind": "CATALOG",
+        "status": "RUNNING",
+        "quotaShare": 0.2,
+        "valleyWindow": "22:00-06:00 local",
+        "priorityPolicy": "MOST_ACTIVE_FIRST",
+        "coverage": {
+          "discovered": 41000,
+          "classificationRequested": 9000,
+          "classified": 30500,
+          "coverageRatio": 0.74
+        },
+        "createdAt": "2026-10-20T00:00:00Z",
+        "updatedAt": "2026-10-22T09:00:00Z"
+      }
+    }
+  ]
+}

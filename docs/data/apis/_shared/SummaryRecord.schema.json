@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/SummaryRecord.schema.json",
+  "title": "SummaryRecord",
+  "description": "Immutable change summary with its provenance (DISENO S2 (b) aggregate SummaryRecord). Template content only.",
+  "$comment": "Source: DISENO 3.8.6 (view model SummaryRecord), S2 (b)(c) summary_record, summary_invalidation; EV-05 ChangeSummaryReady.v1; PRD RF-041, RF-042, RF-047, RF-054. Internal columns (params, verification, evaluationRunId) are not exposed. Audience: internal (S2 -> S7 SX-01b, S2 -> S6 SX-06) and public (embedded in PendingUpdateView). Residency: global, TEMPLATE_PUBLIC (no engagementId/firmId/userId, RF-056).",
+  "type": "object",
+  "properties": {
+    "summaryId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Summary id."
+    },
+    "templateId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Template id."
+    },
+    "from": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Base version of the pair (version label issued by the Templates Service, not a uuid, e.g. 'v7')."
+    },
+    "to": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Target version of the pair (version label issued by the Templates Service, not a uuid, e.g. 'v7')."
+    },
+    "locale": {
+      "type": "string",
+      "description": "Locale (BCP 47).",
+      "minLength": 1
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "DETERMINISTIC",
+        "NARRATIVE"
+      ],
+      "description": "SummaryKind."
+    },
+    "diffHash": {
+      "type": "string",
+      "description": "SHA-256 of the canonical diff (RF-047).",
+      "minLength": 1
+    },
+    "promptVersion": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Prompt version; null for DETERMINISTIC."
+    },
+    "modelId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Pinned model id (no alias, RF-054); null for DETERMINISTIC."
+    },
+    "outputHash": {
+      "type": "string",
+      "description": "Hash of the stored output.",
+      "minLength": 1
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Generation instant."
+    },
+    "invalidatedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "Invalidation instant (summary_invalidation), null if valid (EV-07)."
+    },
+    "output": {
+      "type": "object",
+      "description": "Structured summary output with a fixed JSON schema (RF-042). Field names from RF-042, derived.",
+      "properties": {
+        "headline": {
+          "type": "string",
+          "description": "Headline (RF-042; may be absent for DETERMINISTIC)."
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "description": "Plain-language description of one change (template content only)."
+              },
+              "diffPaths": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Diff paths cited by the change (RF-042, RF-055: every claim cites existing diff paths).",
+                "minItems": 1
+              }
+            },
+            "required": [
+              "description",
+              "diffPaths"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Changes (RF-041 sections added/removed/modified; RF-042 changes[])."
+        },
+        "impact": {
+          "type": "string",
+          "description": "Impact statement (RF-042)."
+        }
+      },
+      "required": [
+        "changes"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "summaryId",
+    "templateId",
+    "from",
+    "to",
+    "locale",
+    "kind",
+    "diffHash",
+    "promptVersion",
+    "modelId",
+    "outputHash",
+    "generatedAt",
+    "invalidatedAt",
+    "output"
+  ],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "summaryId": "55555555-5555-4555-8555-555555555555",
+      "templateId": "33333333-3333-4333-8333-333333333333",
+      "from": "v3",
+      "to": "v7",
+      "locale": "en-CA",
+      "kind": "NARRATIVE",
+      "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+      "promptVersion": "p-2026-10",
+      "modelId": "example-model-2026-01-01",
+      "outputHash": "0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9",
+      "generatedAt": "2026-10-22T10:02:00Z",
+      "invalidatedAt": null,
+      "output": {
+        "headline": "Revenue section reorganised and one new checklist question",
+        "changes": [
+          {
+            "description": "A new question about related-party disclosures was added to the planning checklist.",
+            "diffPaths": [
+              "/sections/planning/checklist/items/12"
+            ]
+          }
+        ],
+        "impact": "Engagements that apply v7 get one more planning question to answer."
+      }
+    }
+  ]
+}

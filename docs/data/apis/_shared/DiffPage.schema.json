@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/_shared/DiffPage.schema.json",
+  "title": "DiffPage",
+  "description": "Page of the canonical diff of a summary pair, ordered by diff path (DISENO 3.8.6 DiffPage/DiffEntry).",
+  "$comment": "Source: DISENO 3.8.6, S2 (e) GET /v1/summaries/{summaryId}/diff, S7 (e) GET /v1/engagements/{id}/pending-update/diff; AP-S3; PRD RF-035, RF-047. Audience: internal (S2) and public (S7). Residency: global TEMPLATE_PUBLIC template content (no engagement, firm or user data).",
+  "type": "object",
+  "properties": {
+    "summaryId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Summary id."
+    },
+    "diffHash": {
+      "type": "string",
+      "description": "Diff hash.",
+      "minLength": 1
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DiffEntry"
+      },
+      "description": "Diff entries ordered by path."
+    },
+    "nextCursor": {
+      "$ref": "pagination.schema.json#/$defs/nextCursor"
+    }
+  },
+  "required": [
+    "summaryId",
+    "diffHash",
+    "items",
+    "nextCursor"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "DiffEntry": {
+      "type": "object",
+      "description": "DiffEntry: one entry of the canonical diff (DISENO 3.8.6).",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Diff path (the pagination key, 'paging by path').",
+          "minLength": 1
+        },
+        "changeType": {
+          "type": "string",
+          "enum": [
+            "ADDED",
+            "REMOVED",
+            "MODIFIED"
+          ],
+          "description": "Change type (RF-041 sections added/removed/modified)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable schema label of the path (DISENO 5.2)."
+        },
+        "before": {
+          "description": "Value before (template content; absent when ADDED)."
+        },
+        "after": {
+          "description": "Value after (template content; absent when REMOVED)."
+        }
+      },
+      "required": [
+        "path",
+        "changeType"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "summaryId": "55555555-5555-4555-8555-555555555555",
+      "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+      "items": [
+        {
+          "path": "/sections/planning/checklist/items/12",
+          "changeType": "ADDED",
+          "label": "Planning checklist - question 12",
+          "after": {
+            "text": "Have related-party disclosures been reviewed?"
+          }
+        }
+      ],
+      "nextCursor": "L3NlY3Rpb25zL3BsYW5uaW5n"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/dynamo/schemas/ms-engagement-index/processed_events.schema.json",
+  "title": "processed_events item (ProcessedEvent)",
+  "description": "Deduplication of consumed events by eventId (ProcessedEventStore, DISENO S3 (g); RF-080, INV-07).",
+  "$comment": "Table processed_events (per cell). Partition key only: PK = EVT#<eventId> (no sort key in DISENO). AP-I8: PutItem with attribute_not_exists(PK). TTL attribute ttl = TTL_dedupe.",
+  "type": "object",
+  "properties": {
+    "PK": {
+      "type": "string",
+      "description": "Partition key. PK = \"EVT#<eventId>\".",
+      "pattern": "^EVT#[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "entityType": {
+      "type": "string",
+      "const": "ProcessedEvent",
+      "description": "Discriminator of the item type (technical)."
+    },
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Envelope eventId (DISENO 4.2)."
+    },
+    "ttl": {
+      "type": "integer",
+      "description": "DynamoDB TTL attribute, epoch seconds. Duration = named parameter TTL_dedupe (no value fixed in the docs)."
+    },
+    "version": {
+      "type": "integer",
+      "description": "Optimistic-concurrency attribute (CLAUDE.md DynamoDB rules; RF-067): every write is conditional on the previous value and increments it."
+    },
+    "createdBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id that created the item; system writers use the service-principal uuid configured per service."
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): creation instant (ISO-8601 UTC)."
+    },
+    "updatedBy": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Audit (technical, mandatory): principal id of the last write; changes on every write."
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Audit (technical, mandatory): instant of the last write; changes on every write."
+    },
+    "state": {
+      "type": "string",
+      "enum": [
+        "PROCESSED"
+      ],
+      "description": "Constant PROCESSED (the item exists = processed; expires with TTL_dedupe). Lifecycle and who sets it: DISENO 3.8.2 (DEC-27)."
+    }
+  },
+  "required": [
+    "PK",
+    "entityType",
+    "eventId",
+    "ttl",
+    "version",
+    "createdBy",
+    "createdAt",
+    "updatedBy",
+    "updatedAt",
+    "state"
+  ],
+  "additionalProperties": false
+}

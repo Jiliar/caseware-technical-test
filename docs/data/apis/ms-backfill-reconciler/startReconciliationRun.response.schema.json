@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/apis/ms-backfill-reconciler/startReconciliationRun.response.schema.json",
+  "title": "startReconciliationRun response",
+  "description": "POST /v1/reconciliation-runs - responses per status code.",
+  "$comment": "Source: DISENO S5 (d) RunReconciliationUseCase, (e), (f), 4.4 CMD-07, 7.4 runbook step 5, DEC-25; PRD RF-083, RF-088. Audience: OPERATOR (operator console). Residency: REGIONAL (cell). Idempotency: Idempotency-Key required: runId = UUID v5 of the key, so a repeated request returns the same run (DEC-35). Pagination: n/a.",
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "integer",
+      "enum": [
+        201,
+        400,
+        409
+      ],
+      "description": "HTTP status."
+    },
+    "headers": {
+      "type": "object",
+      "description": "Response headers (see the per-status subschema)."
+    },
+    "body": {
+      "description": "Response body (see the per-status subschema)."
+    }
+  },
+  "required": [
+    "status",
+    "headers"
+  ],
+  "additionalProperties": false,
+  "oneOf": [
+    {
+      "$ref": "#/$defs/status201"
+    },
+    {
+      "$ref": "#/$defs/status400"
+    },
+    {
+      "$ref": "#/$defs/status409"
+    }
+  ],
+  "$defs": {
+    "status201": {
+      "type": "object",
+      "description": "201: Run created (RUNNING); a repeated Idempotency-Key returns the same run.",
+      "properties": {
+        "status": {
+          "const": 201,
+          "description": "Run created."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeJson"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "type": "object",
+          "description": "ReconciliationRun view (DISENO 3.8.6).",
+          "properties": {
+            "runId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Run id."
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "EXPORT",
+                "SAMPLE",
+                "TARGETED"
+              ],
+              "description": "Run kind."
+            },
+            "scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "TEMPLATE",
+                "FIRM",
+                "ENGAGEMENTS",
+                null
+              ],
+              "description": "Scope of a TARGETED run; null otherwise."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "RUNNING",
+                "COMPLETED"
+              ],
+              "description": "Run status (reconciliation_run.state)."
+            },
+            "startedAt": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Start."
+            },
+            "finishedAt": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "date-time",
+              "description": "End; null while RUNNING."
+            },
+            "sampleSize": {
+              "type": "integer",
+              "description": "Sample size.",
+              "minimum": 0
+            },
+            "checked": {
+              "type": "integer",
+              "description": "Checked.",
+              "minimum": 0
+            },
+            "discrepancies": {
+              "type": "integer",
+              "description": "Discrepancies.",
+              "minimum": 0
+            },
+            "repaired": {
+              "type": "integer",
+              "description": "Repaired.",
+              "minimum": 0
+            },
+            "accuracyEstimate": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 1,
+              "description": "1 - discrepancies / checked (SLO-02 SLI); null while RUNNING."
+            }
+          },
+          "required": [
+            "runId",
+            "kind",
+            "status",
+            "startedAt",
+            "finishedAt",
+            "sampleSize",
+            "checked",
+            "discrepancies",
+            "repaired",
+            "accuracyEstimate",
+            "scope"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status400": {
+      "type": "object",
+      "description": "400: Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request).",
+      "properties": {
+        "status": {
+          "const": 400,
+          "description": "Invalid request: parameters or body, missing Idempotency-Key, limit > N_pagemax or a foreign cursor (problem type invalid-request)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 400
+                },
+                "type": {
+                  "enum": [
+                    "invalid-request"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    },
+    "status409": {
+      "type": "object",
+      "description": "409: Idempotency-Key reused with another body (idempotency-key-reuse).",
+      "properties": {
+        "status": {
+          "const": 409,
+          "description": "Idempotency-Key reused with another body (idempotency-key-reuse)."
+        },
+        "headers": {
+          "type": "object",
+          "properties": {
+            "correlation-id": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/correlationId"
+            },
+            "content-type": {
+              "$ref": "../_shared/common-headers.schema.json#/$defs/contentTypeProblem"
+            }
+          },
+          "required": [
+            "correlation-id",
+            "content-type"
+          ],
+          "additionalProperties": false
+        },
+        "body": {
+          "allOf": [
+            {
+              "$ref": "../_shared/problem-details.schema.json"
+            },
+            {
+              "properties": {
+                "status": {
+                  "const": 409
+                },
+                "type": {
+                  "enum": [
+                    "idempotency-key-reuse"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "status",
+        "headers",
+        "body"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "status": 201,
+      "headers": {
+        "correlation-id": "99999999-9999-4999-8999-999999999999",
+        "content-type": "application/json"
+      },
+      "body": {
+        "runId": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "kind": "TARGETED",
+        "status": "RUNNING",
+        "startedAt": "2026-10-22T02:00:00Z",
+        "finishedAt": null,
+        "sampleSize": 2000,
+        "checked": 0,
+        "discrepancies": 0,
+        "repaired": 0,
+        "accuracyEstimate": null,
+        "scope": "TEMPLATE"
+      }
+    }
+  ]
+}

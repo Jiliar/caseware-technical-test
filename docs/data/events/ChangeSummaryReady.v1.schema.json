@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://caseware.invalid/docs/en/data/events/ChangeSummaryReady.v1.schema.json",
+  "title": "ChangeSummaryReady.v1",
+  "description": "A change summary record was generated (deterministic or narrative) for a SummaryKey. Carries provenance only (hashes, prompt version, model id), never the summary text: content is read by reference (SX-01b). Feeds ms-audit-ledger summary_provenance.",
+  "$comment": "Source: DISENO 4.3 catalog EV-05; RF-041, RF-042, RF-047; US-05.1.1, US-05.1.2. Producer: ms-change-summary. Consumers: ms-experience-gateway, ms-audit-ledger. Channel: global EventBridge bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS. Ordering/partition key: summaryKey (templateId, from, to, locale). Idempotency key: summaryId. Guarantee: at-least-once. Versioning: additive within v1 (DISENO 4.2). dataClass: TEMPLATE_PUBLIC (DISENO 4.3). Crosses regions (whitelisted in the EventBridge rules); must not contain engagementId, firmId, userId or free text (contract test, DISENO 4.1).",
+  "x-catalogId": "EV-05",
+  "x-messageKind": "EVENT",
+  "x-dataClass": "TEMPLATE_PUBLIC",
+  "x-crossRegion": true,
+  "x-producers": [
+    "ms-change-summary"
+  ],
+  "x-consumers": [
+    "ms-experience-gateway",
+    "ms-audit-ledger"
+  ],
+  "x-channel": "global EventBridge bus -> cell EventBridge buses (whitelist) -> one rule per consumer -> SQS",
+  "x-snsTopic": null,
+  "x-sqsQueues": [
+    "{cell}-ms-experience-gateway-ms-change-summary",
+    "{cell}-ms-audit-ledger-ms-change-summary"
+  ],
+  "x-orderingKey": "summaryKey (templateId, from, to, locale)",
+  "x-idempotencyKey": "summaryId",
+  "x-deliveryGuarantee": "at-least-once",
+  "allOf": [
+    {
+      "$ref": "envelope.schema.json"
+    }
+  ],
+  "properties": {
+    "eventType": {
+      "const": "ChangeSummaryReady"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "kind": {
+      "const": "EVENT"
+    },
+    "producer": {
+      "const": "ms-change-summary"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "summaryId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Immutable summary record id (summary_record.summary_id)."
+        },
+        "templateId": {
+          "$ref": "envelope.schema.json#/$defs/uuid",
+          "description": "Template id."
+        },
+        "from": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Source version label (SummaryKey.from)."
+        },
+        "to": {
+          "$ref": "envelope.schema.json#/$defs/versionLabel",
+          "description": "Target version label (SummaryKey.to)."
+        },
+        "locale": {
+          "type": "string",
+          "description": "Locale of the summary (SummaryKey.locale; format not specified in the documents)."
+        },
+        "kind": {
+          "$ref": "envelope.schema.json#/$defs/summaryKind"
+        },
+        "diffHash": {
+          "type": "string",
+          "description": "Hash of the canonical diff (diff_snapshot.diff_hash, SHA-256)."
+        },
+        "promptVersion": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Prompt version label; null for DETERMINISTIC summaries (summary_record.prompt_version is NULLable)."
+        },
+        "modelId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Provider model id, pinned without alias (RF-054); null for DETERMINISTIC summaries."
+        },
+        "outputHash": {
+          "type": "string",
+          "description": "Hash of the generated output."
+        },
+        "generatedAt": {
+          "$ref": "envelope.schema.json#/$defs/instant",
+          "description": "Generation instant."
+        }
+      },
+      "required": [
+        "summaryId",
+        "templateId",
+        "from",
+        "to",
+        "locale",
+        "kind",
+        "diffHash",
+        "promptVersion",
+        "modelId",
+        "outputHash",
+        "generatedAt"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "eventId": "e0000000-0000-4000-8000-000000000005",
+      "eventType": "ChangeSummaryReady",
+      "schemaVersion": 1,
+      "occurredAt": "2026-10-22T10:00:01Z",
+      "producer": "ms-change-summary",
+      "correlationId": "66666666-6666-4666-8666-666666666666",
+      "causationId": "c0000000-0000-4000-8000-000000000005",
+      "cellId": "global",
+      "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+      "kind": "EVENT",
+      "payload": {
+        "summaryId": "55555555-5555-4555-8555-555555555555",
+        "templateId": "33333333-3333-4333-8333-333333333333",
+        "from": "v3",
+        "to": "v7",
+        "locale": "en-CA",
+        "kind": "NARRATIVE",
+        "diffHash": "9f2c1e0b7a4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+        "promptVersion": "p-2026-10",
+        "modelId": "example-model-2026-01-01",
+        "outputHash": "0a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9",
+        "generatedAt": "2026-10-22T10:02:00Z"
+      }
+    }
+  ]
+}
